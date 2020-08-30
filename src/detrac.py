@@ -1,4 +1,4 @@
-from parser import args
+from utils.parser import args
 
 import os
 
@@ -46,17 +46,17 @@ def main():
             if args.train == True and args.infer == True:
                 # Training + Inference mode
                 print("\nPreparing the model for training and inference\n")
-                training_mode()
-                inference_mode()
+                training(args)
+                inference(args)
             else:
                 if args.train == True and args.infer == False:
                     # Training mode
                     print("\nPreparing the model for training\n")
-                    training_mode()
+                    training(args)
                 elif args.train == False and args.infer == True:
                     # Inference mode
                     print("\nPreparing the model for inference\n")
-                    inference_mode()
+                    inference(args)
     if option == 'torch' or option == 'pytorch':
         from frameworks import detrac_torch
         if (args.train == None and args.infer == None) or (args.train == False and args.infer == False):
@@ -68,17 +68,17 @@ def main():
             if args.train == True and args.infer == True:
                 # Training + Inference mode
                 print("\nPreparing the model for training and inference\n")
-                training_mode()
-                inference_mode()
+                training(args)
+                inference(args)
             else:
                 if args.train == True and args.infer == False:
                     # Training mode
                     print("\nPreparing the model for training")
-                    training_mode()
+                    training(args)
                 elif args.train == False and args.infer == True:
                     # Inference mode
                     print("\nPreparing the model for inference\n")
-                    inference_mode()
+                    inference(args)
 
 if __name__ == "__main__":
     main()
