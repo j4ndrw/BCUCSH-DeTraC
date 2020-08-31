@@ -402,7 +402,7 @@ class Net():
 
             self.model.load_state_dict(checkpoint['model_state_dict'])
 
-            progress_bar = tqdm(start_epoch, epochs):
+            progress_bar = tqdm(start_epoch, epochs)
 
             for epoch in progress_bar:
                 train_loss, train_acc = self.fit(train_loader)
@@ -416,7 +416,7 @@ class Net():
                     f"loss = {train_loss} | acc = {train_acc}% | val_loss = {val_loss} | val_acc = {val_acc}%")
         
         else:
-            progress_bar = tqdm(start_epoch, epochs):
+            progress_bar = tqdm(start_epoch, epochs)
 
             for epoch in progress_bar:
                 train_loss, train_acc = self.fit(train_loader)

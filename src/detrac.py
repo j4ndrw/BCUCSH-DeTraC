@@ -84,7 +84,6 @@ def main():
         # Use PyTorch
         print("\n[PyTorch Backend]\n")
 
-    print(option)
     if option == 'tf' or option == 'tensorflow':
         if (args.train == None and args.infer == None) or (args.train == False and args.infer == False):
             # No option = No reason to use the model

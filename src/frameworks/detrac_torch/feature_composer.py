@@ -2,9 +2,9 @@ import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 import numpy as np
 
-from src.utils.preprocessing import preprocess_images, preprocess_single_image
-from src.utils.kfold import KFold_cross_validation_split
-from src.utils.multiclass_confusion_matrix import multiclass_confusion_matrix
+from utils.preprocessing import preprocess_images, preprocess_single_image
+from utils.kfold import KFold_cross_validation_split
+from utils.multiclass_confusion_matrix import multiclass_confusion_matrix
 
 from network import Net
 

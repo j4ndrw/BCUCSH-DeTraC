@@ -2,9 +2,9 @@ import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 import numpy as np
 
-from src.utils.preprocess_images import preprocessing
-from src.utils.kfold import KFold_cross_validation_split
-from src.utils.multiclass_confusion_matrix import multiclass_confusion_matrix
+from utils.preprocessing import preprocess_images
+from utils.kfold import KFold_cross_validation_split
+from utils.multiclass_confusion_matrix import multiclass_confusion_matrix
 
 from network import Net
 
@@ -48,7 +48,7 @@ def train_feature_extractor(
         cuda
     ):
 
-    class_names, x, y = preprocessing(initial_dataset_path, 224, 224, num_classes)
+    class_names, x, y = preprocess_images(initial_dataset_path, 224, 224, num_classes)
 
     X_train, X_test, Y_train, Y_test = KFold_cross_validation_split(x, y, folds)
 
