@@ -1,6 +1,8 @@
 from utils.parser import args
 from utils import construct_composed_dataset
 
+from frameworks import detrac_torch, detrac_tf
+
 import os
 
 def training(args):
@@ -16,7 +18,6 @@ def training(args):
 
     elif args.framework[0].lower() == "torch" or args.framework[0].lower() == "pytorch":
         use_cuda = input("Use CUDA for GPU computation? [Y / N]: ")
-        from frameworks import detrac_torch
         if use_cuda.lower() == "y" or use_cuda.lower() == "yes":
             use_cuda = True
         elif use_cuda.lower() == "n" or use_cuda.lower() == "no":
@@ -55,7 +56,6 @@ def inference(args):
         pass
 
     elif args.framework[0].lower() == "torch" or args.framework[0].lower() == "pytorch":
-        from frameworks import detrac_torch
         model_list = []
         path_to_models = "../models/torch"
         print("Here is a list of your models: ")
@@ -69,8 +69,10 @@ def inference(args):
 
         path_to_model = os.path.join(path_to_models, model_list[model_choice - 1])
 
-        prediction = detrac_torch.feature_composer.infer(path_to_model, path_to_file)
-        # TODO: Save labels in model checkpoint file for inference.
+        prediction = detrac_torch.feature_composer.infer(path_to_model, path_to_file, use_labels = True)
+
+        print(f"Prediction: {list(prediction.keys())[0]}")
+        print(f"Confidence: {list(prediction.values())[0]}")
 
 def main():
     option = args.framework[0].lower()

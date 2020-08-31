@@ -64,8 +64,7 @@ def train_feature_extractor(
         Y_test, 
         epochs, 
         batch_size, 
-        save = True
-        resume = False,
+        resume = False
     )
 
     for class_name in class_names:

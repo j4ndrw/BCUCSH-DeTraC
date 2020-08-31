@@ -56,6 +56,8 @@ def train_feature_composer(
 
     net = Net(models.vgg16(pretrained = True), num_classes = numClasses, cuda = cuda)
 
+    net.save_labels_for_inference(labels = class_names)
+
     train_loss, train_acc, val_loss, val_acc = net.fit(
         X_train, 
         Y_train, 
@@ -63,8 +65,7 @@ def train_feature_composer(
         Y_test, 
         epochs, 
         batch_size, 
-        save = True
-        resume = False,
+        resume = False
     )
 
     compute_confusion_matrix(y_true = Y_test, y_pred = net.infer(X_test))

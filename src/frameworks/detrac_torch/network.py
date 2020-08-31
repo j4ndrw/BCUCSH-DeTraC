@@ -169,6 +169,8 @@ class Net():
                 factor = 0.95,
                 patience = 5
             )
+
+        self.ckpt_path = os.path.join("../../../models/torch", self.save_name)
         
         """
         Define the loss.
@@ -176,7 +178,7 @@ class Net():
         """
         self.criterion = nn.NLLLoss()
 
-    def save(self, epoch, train_loss, train_acc, val_loss, val_acc, ckpt_path):
+    def save(self, epoch, train_loss, train_acc, val_loss, val_acc):
         """
         Save the model's gradients, as well as the optimizer's latent gradients.
         Also save some additional data, such as epoch, loss and accuracy.
@@ -187,7 +189,6 @@ class Net():
             <float> train_acc
             <float> val_loss
             <float> val_acc
-            <str> ckpt_path
         """
         torch.save({
             "model_state_dict" : self.model.state_dict(),
@@ -197,14 +198,13 @@ class Net():
             "train_loss" : train_acc,
             "val_loss" : val_loss,
             "val_acc" : val_acc
-        }, ckpt_path)
+        }, self.ckpt_path)
 
-    def load(self, ckpt_path, *args):
+    def load(self, *args):
         """
         Load the model on GPU or CPU.
 
         params:
-            <str> ckpt_path
             <unpacked_list> args
 
         returns:
@@ -214,13 +214,13 @@ class Net():
         while prompt != "GPU" and prompt != "CPU":
             prompt = input("Load on GPU or CPU?\n")
         
-        assert os.path.exists(ckpt_path)
+        assert os.path.exists(self.ckpt_path)
         print("Loading checkpoint")
         if prompt == "CPU":
-            checkpoint = torch.load(ckpt_path, map_location = lambda storage, loc: storage)
+            checkpoint = torch.load(self.ckpt_path, map_location = lambda storage, loc: storage)
             self.cuda = False
         else:
-            checkpoint = torch.load(ckpt_path)
+            checkpoint = torch.load(self.ckpt_path)
             self.cuda = True
         
         loaded_args = []
@@ -241,6 +241,15 @@ class Net():
         if len(loaded_args) != 0:
             return loaded_args
 
+    def save_labels_for_inference(self, labels):
+        torch.save({
+            "labels" : labels
+        }, self.ckpt_path)
+
+    def load_labels_for_inference(self):
+        assert os.path.exists(self.ckpt_path)
+        checkpoint = torch.load(self.ckpt_path, map_location = lambda storage, loc: storage)
+        return checkpoint['labels']
 
     def train_step(self, train_loader):
         """
@@ -336,7 +345,6 @@ class Net():
         y_test,
         epochs: int,
         batch_size: int,
-        save: bool,
         resume: bool
     ):
         """
@@ -384,10 +392,9 @@ class Net():
             validation_loader = DataLoader(dataset = list(zip(x_test_ds, y_test)), shuffle = True, batch_size = batch_size)
 
         start_epoch = 0
-        ckpt_path = os.path.join("../../../models/torch", self.save_name)
         if resume == True:
-            assert os.path.exists(ckpt_path)
-            checkpoint = torch.load(ckpt_path)
+            assert os.path.exists(self.ckpt_path)
+            checkpoint = torch.load(self.ckpt_path)
 
             start_epoch = checkpoint['epoch']
 
@@ -401,10 +408,9 @@ class Net():
                 train_loss, train_acc = self.fit(train_loader)
                 val_loss, val_acc = self.validate(validation_loader)
                 scheduler.step(val_loss)
-                
-                if save == True:
-                    if (epoch + 1) % (epochs // 10) == 0:
-                        self.save(optimizer, epoch, epoch_error, epoch_acc, val_loss, val_acc)
+            
+                if (epoch + 1) % (epochs // 10) == 0:
+                    self.save(optimizer, epoch, epoch_error, epoch_acc, val_loss, val_acc)
 
                 progress_bar.set_description(
                     f"loss = {train_loss} | acc = {train_acc}% | val_loss = {val_loss} | val_acc = {val_acc}%")
@@ -417,14 +423,13 @@ class Net():
                 val_loss, val_acc = self.validate(validation_loader)
                 scheduler.step(val_loss)
                 
-                if save == True:
-                    if (epoch + 1) % (epochs // 10) == 0:
-                        self.save(optimizer, epoch, epoch_error, epoch_acc, val_loss, val_acc)
+                if (epoch + 1) % (epochs // 10) == 0:
+                    self.save(optimizer, epoch, epoch_error, epoch_acc, val_loss, val_acc)
 
                 progress_bar.set_description(
                     f"loss = {train_loss} | acc = {train_acc}% | val_loss = {val_loss} | val_acc = {val_acc}%")
 
-    def infer(self, input_data):
+    def infer(self, input_data, use_labels = False):
         """
         The model's inference process.
 
@@ -440,11 +445,25 @@ class Net():
 
             if self.cuda == True:     
                 input_data = input_data.reshape(-1, 3, 224, 224).cuda()
-                return self.model(input_data).cpu().numpy()
+                output = self.model(input_data).cpu().numpy()
+                
+                if use_labels == True:
+                    labels = self.load_labels_for_inference()
+                    labeled_output = {labels[output.argmax()] : output}
+                    return labeled_output
+                else:
+                    return output
+
             else:
                 input_data = input_data.reshape(-1, 3, 224, 224)
-                return self.model.cpu()(input_data).numpy()
+                output = self.model.cpu()(input_data).numpy()
 
+                if use_labels == True:
+                    labels = self.load_labels_for_inference()
+                    labeled_output = {labels[output.argmax()] : output}
+                    return labeled_output
+                else:
+                    return output
 
     def infer_using_pretrained_layers_without_last(self, features):
         

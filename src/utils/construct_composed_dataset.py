@@ -63,6 +63,6 @@ def execute_decomposition(initial_dataset_path, composed_dataset_path, features_
         decompose(
             path_to_features = os.path.join("../data", features_path, "{class_name}.npy"),
             path_to_images = os.path.join("../data", initial_dataset_path, class_name),
-            path_to_decomposed_images_1 = os.path.join("../data", composed_dataset_path, f"{class_name}_1/")
+            path_to_decomposed_images_1 = os.path.join("../data", composed_dataset_path, f"{class_name}_1/"),
             path_to_decomposed_images_2 = os.path.join("../data", composed_dataset_path, f"{class_name}_2/")
         )
