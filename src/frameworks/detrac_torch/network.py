@@ -100,8 +100,8 @@ class Net():
         Set the weights and biases accordingly
         """
         with torch.no_grad():
-            self.classification_layer.weight = torch.nn.Parameter(self.set_device(torch.randn((self.num_classes, self.input_size))) * 1e-5)
-            self.classification_layer.bias = torch.nn.Parameter(self.set_device(torch.randn(self.num_classes)) * 1e-5 + 1)
+            self.classification_layer.weight = torch.nn.Parameter(set_device(torch.randn((self.num_classes, self.input_size)), self.cuda) * 1e-5)
+            self.classification_layer.bias = torch.nn.Parameter(set_device(torch.randn(self.num_classes), self.cuda) * 1e-5 + 1)
 
         """
         Prepare the layer for computation on the selected device
@@ -364,8 +364,8 @@ class Net():
             torch.backends.cudnn.benchmark = True
         
         if self.mode == "feature_extractor":
-            train_loader = DataLoader(dataset = list(zip(x_train, y_train)), shuffle = True, batch_size = batch_size)
-            validation_loader = DataLoader(dataset = list(zip(x_test, y_test)), shuffle = True, batch_size = batch_size)
+            train_loader = DataLoader(dataset = list(zip(x_train, y_train)), shuffle = True, batch_size = batch_size, num_workers = 2, pin_memory = True)
+            validation_loader = DataLoader(dataset = list(zip(x_test, y_test)), shuffle = True, batch_size = batch_size, num_workers = 2, pin_memory = True)
         else:
             """
             We want to augment the data when in feature composition mode.
@@ -402,12 +402,12 @@ class Net():
 
             self.model.load_state_dict(checkpoint['model_state_dict'])
 
-            progress_bar = tqdm(start_epoch, epochs)
+            progress_bar = tqdm(range(start_epoch, epochs))
 
             for epoch in progress_bar:
-                train_loss, train_acc = self.fit(train_loader)
-                val_loss, val_acc = self.validate(validation_loader)
-                scheduler.step(val_loss)
+                train_loss, train_acc = self.train_step(train_loader)
+                val_loss, val_acc = self.validation_step(validation_loader)
+                self.scheduler.step(val_loss)
             
                 if (epoch + 1) % (epochs // 10) == 0:
                     self.save(optimizer, epoch, epoch_error, epoch_acc, val_loss, val_acc)
@@ -416,18 +416,18 @@ class Net():
                     f"loss = {train_loss} | acc = {train_acc}% | val_loss = {val_loss} | val_acc = {val_acc}%")
         
         else:
-            progress_bar = tqdm(start_epoch, epochs)
+            progress_bar = tqdm(range(start_epoch, epochs))
 
             for epoch in progress_bar:
-                train_loss, train_acc = self.fit(train_loader)
-                val_loss, val_acc = self.validate(validation_loader)
-                scheduler.step(val_loss)
+                train_loss, train_acc = self.train_step(train_loader)
+                val_loss, val_acc = self.validation_step(validation_loader)
+                self.scheduler.step(val_loss)
                 
                 if (epoch + 1) % (epochs // 10) == 0:
                     self.save(optimizer, epoch, epoch_error, epoch_acc, val_loss, val_acc)
 
                 progress_bar.set_description(
-                    f"loss = {train_loss} | acc = {train_acc}% | val_loss = {val_loss} | val_acc = {val_acc}%")
+                    f"loss = {train_loss:.2f} | acc = {train_acc:.2f}% | val_loss = {val_loss:.2f} | val_acc = {val_acc:.2f}%")
 
     def infer(self, input_data, use_labels = False):
         """

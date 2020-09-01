@@ -2,11 +2,11 @@ import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 import numpy as np
 
-from utils.preprocessing import preprocess_images, preprocess_single_image
+from utils.preprocessing import preprocess_images, preprocess_single_image_torch
 from utils.kfold import KFold_cross_validation_split
 from utils.multiclass_confusion_matrix import multiclass_confusion_matrix
 
-from network import Net
+from .network import Net
 
 import torchvision.models as models
 import torch
@@ -54,7 +54,7 @@ def train_feature_composer(
     X_train /= 255
     X_test /= 255
 
-    net = Net(models.vgg16(pretrained = True), num_classes = numClasses, cuda = cuda)
+    net = Net(models.vgg16(pretrained = True), num_classes = num_classes, cuda = cuda,mode = "feature_composer")
 
     net.save_labels_for_inference(labels = class_names)
 
@@ -71,8 +71,8 @@ def train_feature_composer(
     compute_confusion_matrix(y_true = Y_test, y_pred = net.infer(X_test))
 
 def infer(checkpoint_path, input_image):
-    net = Net(models.vgg16(pretrained = True), num_classes = numClasses, cuda = cuda)
+    net = Net(models.vgg16(pretrained = True), num_classes = num_classes, cuda = cuda, mode = "feature_composer")
     net.load(checkpoint_path)
     assert input_image.lower().endswith("png") or input_image.lower().endswith("jpg") or input_image.lower().endswith("jpeg")
-    img = preprocess_single_image(input_image, 224, 224, imagenet = True)
+    img = preprocess_single_image_torch(input_image, 224, 224, imagenet = True)
     return net.infer(img)

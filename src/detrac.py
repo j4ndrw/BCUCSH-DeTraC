@@ -24,7 +24,8 @@ def training(args):
             use_cuda = False
 
         detrac_torch.feature_extractor.train_feature_extractor(
-            "data/initial_dataset",
+            initial_dataset_path = "../data/initial_dataset",
+            extracted_features_path = "../data/extracted_features",
             epochs = num_epochs,
             batch_size = batch_size,
             num_classes = feature_extractor_num_classes,
@@ -39,7 +40,7 @@ def training(args):
         )
 
         detrac_torch.feature_composer.train_feature_composer(
-            "data/composed_dataset",
+            "../data/composed_dataset",
             epochs = num_epochs,
             batch_size = batch_size,
             num_classes = feature_composer_num_classes,
