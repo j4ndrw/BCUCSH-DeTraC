@@ -1,9 +1,17 @@
 from utils.parser import args
 from utils import construct_composed_dataset
 
-from frameworks import detrac_torch, detrac_tf
+from frameworks import detrac_tf, detrac_torch
 
 import os
+
+INITIAL_DATASET_PATH = "../data/initial_dataset"
+EXTRACTED_FEATURES_PATH = "../data/extracted_features"
+COMPOSED_DATASET_PATH = "../data/composed_dataset",
+
+# TODO: Document and proofread
+# TODO: Fix / implement save and resume mechanic OR get rid of it (not ideal)
+# TODO: Do more in-depth testing
 
 def training(args):
     num_epochs = int(input("Number of epochs: "))
@@ -13,8 +21,27 @@ def training(args):
     k = int(input("How do you wish to split the data? [KFold Cross Validation = K% Training Set and (100% - K%) Validation Set]: "))
 
     if args.framework[0].lower() == "tf" or args.framework[0].lower() == "tensorflow":
-        # TODO: Implement this.
-        pass
+        detrac_tf.feature_extractor.train_feature_extractor(
+            initial_dataset_path = INITIAL_DATASET_PATH,
+            extracted_features_path = EXTRACTED_FEATURES_PATH,
+            epochs = num_epochs,
+            batch_size = batch_size,
+            num_classes = feature_extractor_num_classes,
+            folds = k
+        )
+
+        construct_composed_dataset.execute_decompositoion(
+            initial_dataset_path = INITIAL_DATASET_PATH,
+            composed_dataset_path = COMPOSED_DATASET_PATH,
+            features_path = EXTRACTED_FEATURES_PATH
+        )
+
+        detrac_tf.feature_composer.train_feature_composer(
+            composed_dataset_path = COMPOSED_DATASET_PATH,
+            epochs = num_epochs,
+            batch_size = batch_size,
+            num_classes = feature_composer_num_classes
+        )
 
     elif args.framework[0].lower() == "torch" or args.framework[0].lower() == "pytorch":
         use_cuda = input("Use CUDA for GPU computation? [Y / N]: ")
@@ -24,8 +51,8 @@ def training(args):
             use_cuda = False
 
         detrac_torch.feature_extractor.train_feature_extractor(
-            initial_dataset_path = "../data/initial_dataset",
-            extracted_features_path = "../data/extracted_features",
+            initial_dataset_path = INITIAL_DATASET_PATH,
+            extracted_features_path = EXTRACTED_FEATURES_PATH,
             epochs = num_epochs,
             batch_size = batch_size,
             num_classes = feature_extractor_num_classes,
@@ -34,13 +61,13 @@ def training(args):
         )
 
         construct_composed_dataset.execute_decomposition(
-            "../data/initial_dataset",
-            "../data/composed_dataset",
-            "../data/extracted_features"
+            initial_dataset_path = INITIAL_DATASET_PATH,
+            composed_dataset_path = COMPOSED_DATASET_PATH,
+            features_path = EXTRACTED_FEATURES_PATH
         )
 
         detrac_torch.feature_composer.train_feature_composer(
-            "../data/composed_dataset",
+            composed_dataset_path = COMPOSED_DATASET_PATH,
             epochs = num_epochs,
             batch_size = batch_size,
             num_classes = feature_composer_num_classes,
@@ -53,16 +80,33 @@ def inference(args):
     assert path_to_file.lower().endswith(".png") or path_to_file.lower().endswith(".jpg") or path_to_file.lower().endswith(".jpeg")
 
     if args.framework[0].lower() == "tf" or args.framework[0].lower() == "tensorflow":
-        # TODO: Implement this.
-        pass
+        model_list = []
+        path_to_models = "../models/tf"
+        print("Here is a list of your models: ")
+        for i, model in enumerate(os.listdir(path_to_models)):
+            if model.endswith(".h5") and "feature_composer" in model:
+                print(f"{i}) {model}")
+                model_list.append(model)
+        
+        model_choice = -1
+        while model_choice > len(model_list) or model_choice < 1:
+            model_choice = int(input(f"Which model would you like to load? [Number between 1 and {len(model_list)}]: "))
+
+        path_to_model = os.path.join(path_to_models, model_list[model_choice - 1])
+
+        prediction = detrac_tf.feature_composer.infer(path_to_model, path_to_file, use_labels = True)
+
+        print(f"Prediction: {list(prediction.keys())[0]}")
+        print(f"Confidence: {list(prediction.values())}")
 
     elif args.framework[0].lower() == "torch" or args.framework[0].lower() == "pytorch":
         model_list = []
         path_to_models = "../models/torch"
         print("Here is a list of your models: ")
         for i, model in enumerate(os.listdir(path_to_models)):
-            if model.endswith("pth"):
+            if model.endswith(".pth") and "feature_composer" in model:
                 print(f"{i}) {model}")
+                model_list.append(model)
         
         model_choice = -1
         while model_choice > len(model_list) or model_choice < 1:
@@ -73,7 +117,7 @@ def inference(args):
         prediction = detrac_torch.feature_composer.infer(path_to_model, path_to_file, use_labels = True)
 
         print(f"Prediction: {list(prediction.keys())[0]}")
-        print(f"Confidence: {list(prediction.values())[0]}")
+        print(f"Confidence: {list(prediction.values())}")
 
 def main():
     option = args.framework[0].lower()

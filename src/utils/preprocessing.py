@@ -7,17 +7,22 @@ import numpy as np
 
 from tqdm import tqdm
 
-def preprocess_single_image_torch(img, width, height, imagenet: bool = False):
+def preprocess_single_image(img, width, height, framework: str, imagenet: bool = False):
+    assert framework == "tf" or framework == "torch"
+    
     img = cv2.imread(img)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (width, height))
     img = tf.keras.preprocessing.image.img_to_array(img)
     img = np.expand_dims(img, axis = 0)
     if imagenet == True:
-        img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode = "torch")
+        if framework == "torch":
+            img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode = "torch")
+        else:
+            img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode = "tf")
     return img
 
-def preprocess_images(dataset_path, width, height, num_classes, imagenet: bool = False):
+def preprocess_images(dataset_path, width, height, num_classes, framework: str, imagenet: bool = False):
     """
     Preprocessing of dataset before training.
 
@@ -25,11 +30,14 @@ def preprocess_images(dataset_path, width, height, num_classes, imagenet: bool =
         <string> dataset_path = Path where raw data is located
         <int> width = Width of image
         <int> height = Height of image
+        <string> framework = Choice of framework
 
     returns:
         <NDarray> Features
         <NDarray> Labels
     """
+
+    assert framework == "tf" or framework == "torch"
     
     features = []
     labels = []
@@ -51,7 +59,10 @@ def preprocess_images(dataset_path, width, height, num_classes, imagenet: bool =
                 img = tf.keras.preprocessing.image.img_to_array(img)
                 img = np.expand_dims(img, axis = 0)
                 if imagenet == True:
-                    img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode = "torch")
+                    if framework == "torch":
+                        img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode = "torch")
+                    else:
+                        img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode = "tf")
                 features.append(img)
                 labels.append(identity_array[class_names.index(folder)])
 

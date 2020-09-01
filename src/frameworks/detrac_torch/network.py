@@ -53,7 +53,7 @@ class augmented_data(Dataset):
         item = self.transform(item)
         return item
 
-class Net():
+class Net(object):
     """
     The DeTraC model.
     """
