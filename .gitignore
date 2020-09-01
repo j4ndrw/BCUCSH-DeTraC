@@ -2,4 +2,4 @@
 /src/frameworks/detrac_tf/__pycache__
 /src/frameworks/detrac_torch/__pycache__
 /src/utils/__pycache__
-/data
+/data/initial_dataset/*
