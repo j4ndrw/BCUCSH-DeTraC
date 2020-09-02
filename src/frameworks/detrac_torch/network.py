@@ -398,11 +398,11 @@ class Net(object):
             for i, ckpt_path in enumerate(os.listdir(self.ckpt_dir)):
                 if self.mode == "feature_extractor":
                     if "feature_extractor" in ckpt_path:
-                        print(f"{i}) {ckpt_path}")
+                        print(f"{i + 1}) {ckpt_path}")
                         ckpt_paths_list.append(ckpt_path)
                 else:
                     if "feature_composer" in ckpt_path:
-                        print(f"{i}) {ckpt_path}")
+                        print(f"{i + 1}) {ckpt_path}")
                         ckpt_paths_list.append(ckpt_path)
                 
             assert len(ckpt_paths_list > 0)

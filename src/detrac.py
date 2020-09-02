@@ -18,7 +18,7 @@ def training(args):
     batch_size = int(input("Batch size: "))
     feature_extractor_num_classes = int(input("How many classes are there to predict?: "))
     feature_composer_num_classes = 2 * feature_extractor_num_classes
-    k = int(input("How do you wish to split the data? [KFold Cross Validation = K% Training Set and (100% - K%) Validation Set]: "))
+    k = int(input("How do you wish to split the data? [KFold Validation Split]\nTraining Set = 100% - (K * 10)%\nValidation Set = (K * 10)%\nK = "))
 
     if args.framework[0].lower() == "tf" or args.framework[0].lower() == "tensorflow":
         detrac_tf.feature_extractor.train_feature_extractor(
@@ -84,8 +84,8 @@ def inference(args):
         path_to_models = "../models/tf"
         print("Here is a list of your models: ")
         for i, model in enumerate(os.listdir(path_to_models)):
-            if model.endswith(".h5") and "feature_composer" in model:
-                print(f"{i}) {model}")
+            if "feature_composer" in model:
+                print(f"{i + 1}) {model}")
                 model_list.append(model)
         
         model_choice = -1
@@ -104,8 +104,8 @@ def inference(args):
         path_to_models = "../models/torch"
         print("Here is a list of your models: ")
         for i, model in enumerate(os.listdir(path_to_models)):
-            if model.endswith(".pth") and "feature_composer" in model:
-                print(f"{i}) {model}")
+            if "feature_composer" in model:
+                print(f"{i + 1}) {model}")
                 model_list.append(model)
         
         model_choice = -1
