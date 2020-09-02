@@ -61,4 +61,4 @@ def train_feature_extractor(
                              f"{class_name}.npy"), extract_features)
 
     compute_confusion_matrix(y_true=Y_test, y_pred=net.infer(
-        X_test), framework="tf", mode="feature_extractor")
+        X_test, use_labels=False), framework="tf", mode="feature_extractor", num_classes = num_classes)

@@ -37,7 +37,7 @@ def training(args):
             model_dir=TF_MODEL_DIR
         )
 
-        construct_composed_dataset.execute_decompositoion(
+        construct_composed_dataset.execute_decomposition(
             initial_dataset_path=INITIAL_DATASET_PATH,
             composed_dataset_path=COMPOSED_DATASET_PATH,
             features_path=EXTRACTED_FEATURES_PATH

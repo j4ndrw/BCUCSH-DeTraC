@@ -44,4 +44,4 @@ def multiclass_confusion_matrix(cmat, num_classes):
         sn[class_idx] = TP / (TP + FN)
         sp[class_idx] = TN / (TN + FP)
 
-    return np.mean(ACC_Class), np.mean(SN_Class), np.mean(SP_Class)
+    return np.mean(acc), np.mean(sn), np.mean(sp)

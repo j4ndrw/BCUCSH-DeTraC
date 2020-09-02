@@ -31,7 +31,7 @@ def extract_features(initial_dataset_path, class_name, width, height, net, frame
                 img, mode="tf")
         features.append(img)
 
-    features = np.array(features)
+    features = np.vstack(features)
     return net.infer_using_pretrained_layers_without_last(features)
 
 
@@ -50,23 +50,25 @@ def compose_classes(cmat, block_size: tuple):
     return composed
 
 
-def compute_confusion_matrix(y_true, y_pred, framework: str, mode: str):
+def compute_confusion_matrix(y_true, y_pred, framework: str, mode: str, num_classes: int):
     assert framework == "tf" or framework == "torch"
     assert mode == "feature_extractor" or mode == "feature_composer"
 
     cmat = confusion_matrix(y_true.argmax(
         axis=1), y_pred.argmax(axis=1), normalize="all")
-
+    
     if mode == "feature_composer":
         cmat = compose_classes(cmat, (2, 2))
+        
+    print(cmat)
 
-    acc, sn, sp = multiclass_confusion_matrix(cmat, numClasses)
+    acc, sn, sp = multiclass_confusion_matrix(cmat, num_classes)
 
     output = f"ACCURACY = {acc}\nSENSITIVITY = {sn}\nSPECIFICITY = {sp}"
-    if framework == "torch":
-        log_dir = "../../../models/torch/logs"
-    else:
-        log_dir = "../../../models/tf/logs"
-    with open(os.path.join(log_dir, "metrics_log"), 'w') as f:
-        f.write(output)
+#     if framework == "torch":
+#         log_dir = "../../../models/torch/logs"
+#     else:
+#         log_dir = "../../../models/tf/logs"
+#     with open(os.path.join(log_dir, "metrics_log.txt"), 'w') as f:
+#         f.write(output)
     print(output)

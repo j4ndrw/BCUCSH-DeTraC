@@ -6,3 +6,5 @@ src/frameworks/.ipynb*
 src/utils/.ipynb*
 src/.ipynb*
 data/.ipynb*
+data/initial_dataset/train
+.vscode

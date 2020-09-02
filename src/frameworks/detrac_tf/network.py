@@ -51,14 +51,14 @@ class DeTraC_model(tf.keras.Model):
 
 
 class DeTraC_callback(tf.keras.callbacks.Callback):
-    def __init__(self, model, num_epochs, filepath=filepath):
+    def __init__(self, model, num_epochs, filepath):
         super(DeTraC_callback, self).__init__()
         self.model = model
         self.num_epochs = num_epochs
         self.filepath = filepath
 
     def on_epoch_end(self, epoch, logs=None):
-        if epoch % (num_epochs // 10):
+        if epoch % 10:
             save_model(
                 model=self.model,
                 filepath=self.filepath,
@@ -164,7 +164,7 @@ class Net(object):
                         print(f"{i + 1}) {model_path}")
                         model_paths_list.append(model_path)
 
-            assert len(model_paths_list > 0)
+            assert len(model_paths_list) > 0
 
             model_path_choice = -1
             while model_path_choice > len(model_paths_list) or model_path_choice < 1:
