@@ -14,40 +14,61 @@ import torch
 import os
 import cv2
 
+
 def train_feature_composer(
-        composed_dataset_path,
-        epochs, 
-        batch_size, 
-        num_classes, 
-        cuda
-    ):
+    composed_dataset_path,
+    epochs,
+    batch_size,
+    num_classes,
+    folds,
+    cuda,
+    ckpt_dir
+):
 
-    class_names, x, y = preprocess_images(composed_dataset_path, 224, 224, num_classes, True, framework = "torch")
+    class_names, x, y = preprocess_images(
+        composed_dataset_path, 224, 224, num_classes, True, framework="torch")
 
-    X_train, X_test, Y_train, Y_test = KFold_cross_validation_split(x, y)
+    X_train, X_test, Y_train, Y_test = KFold_cross_validation_split(
+        x, y, folds)
 
     X_train /= 255
     X_test /= 255
 
-    net = Net(models.vgg16(pretrained = True), num_classes = num_classes, cuda = cuda, mode = "feature_composer")
-
-    net.save_labels_for_inference(labels = class_names)
-
-    train_loss, train_acc, val_loss, val_acc = net.fit(
-        X_train, 
-        Y_train, 
-        X_test, 
-        Y_test, 
-        epochs, 
-        batch_size, 
-        resume = False
+    net = Net(
+        models.vgg16(pretrained=True),
+        num_classes=num_classes,
+        cuda=cuda,
+        mode="feature_composer",
+        ckpt_dir=ckpt_dir
     )
 
-    compute_confusion_matrix(y_true = Y_test, y_pred = net.infer(X_test), framework = "torch", mode = "feature_composer")
+    net.save_labels_for_inference(labels=class_names)
 
-def infer(checkpoint_path, input_image):
-    net = Net(models.vgg16(pretrained = True), num_classes = num_classes, cuda = cuda, mode = "feature_composer")
-    net.load(checkpoint_path)
-    assert input_image.lower().endswith("png") or input_image.lower().endswith("jpg") or input_image.lower().endswith("jpeg")
-    img = preprocess_single_image(input_image, 224, 224, imagenet = True, framework = "torch")
-    return net.infer(img)
+    train_loss, train_acc, val_loss, val_acc = net.fit(
+        X_train,
+        Y_train,
+        X_test,
+        Y_test,
+        epochs,
+        batch_size,
+        resume=False
+    )
+
+    compute_confusion_matrix(y_true=Y_test, y_pred=net.infer(
+        X_test), framework="torch", mode="feature_composer")
+
+
+def infer(ckpt_dir, ckpt_name, input_image):
+    net = Net(
+        models.vgg16(pretrained=True),
+        num_classes=num_classes,
+        cuda=cuda,
+        mode="feature_composer",
+        ckpt_dir=ckpt_dir
+    )
+    net.load(os.path.join(ckpt_dir, ckpt_name))
+    assert input_image.lower().endswith("png") or input_image.lower().endswith(
+        "jpg") or input_image.lower().endswith("jpeg")
+    img = preprocess_single_image(
+        input_image, 224, 224, imagenet=True, framework="torch")
+    return net.infer(img, use_labels=True)

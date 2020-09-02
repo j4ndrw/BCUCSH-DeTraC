@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def multiclass_confusion_matrix(cmat, num_classes):
     """
     Multi-class confusion matrix.
