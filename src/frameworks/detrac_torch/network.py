@@ -170,7 +170,8 @@ class Net(object):
                 patience = 5
             )
 
-        self.ckpt_path = os.path.join("../../../models/torch", self.save_name)
+        self.ckpt_dir = "../../../models/torch"
+        self.ckpt_path = os.path.join(self.ckpt_dir, self.save_name)
         
         """
         Define the loss.
@@ -393,7 +394,25 @@ class Net(object):
 
         start_epoch = 0
         if resume == True:
-            assert os.path.exists(self.ckpt_path)
+            ckpt_paths_list = []
+            for i, ckpt_path in enumerate(os.listdir(self.ckpt_dir)):
+                if self.mode == "feature_extractor":
+                    if "feature_extractor" in ckpt_path:
+                        print(f"{i}) {ckpt_path}")
+                        ckpt_paths_list.append(ckpt_path)
+                else:
+                    if "feature_composer" in ckpt_path:
+                        print(f"{i}) {ckpt_path}")
+                        ckpt_paths_list.append(ckpt_path)
+                
+            assert len(ckpt_paths_list > 0)
+            
+            ckpt_path_choice = -1
+            while ckpt_path_choice > len(model_paths_list) or ckpt_path_choice < 1:
+                ckpt_path_choice = int(input(f"Which model would you like to load? [Number between 1 and {len(ckpt_paths_list)}]: "))
+
+            ckpt_path = os.path.join(self.ckpt_dir, ckpt_paths_list[ckpt_path_choice - 1])
+
             checkpoint = torch.load(self.ckpt_path)
 
             start_epoch = checkpoint['epoch']

@@ -3,7 +3,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import save_model, load_model
 
 import os
 import time
@@ -49,11 +49,21 @@ class DeTraC_model(tf.keras.Model):
         return x
 
 class DeTraC_callback(tf.keras.callbacks.Callback):
-    def __init__(self, model):
+    def __init__(self, model, num_epochs, filepath = filepath):
         super(DeTraC_callback, self).__init__()
         self.model = model
+        self.num_epochs = num_epochs
+        self.filepath = filepath
 
-    def on_epoch_begin(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, logs = None):
+        if epoch % (num_epochs // 10):
+            save_model(
+                model = self.model,
+                filepath = self.filepath,
+                save_format = 'tf'
+            )
+
+    def on_epoch_begin(self, epoch, logs = None):
         self.model._initial_epoch = epoch
 
 class Net(object):
@@ -77,7 +87,7 @@ class Net(object):
         now = datetime.now()
         now = f'{str(now).split(" ")[0]}_{str(now).split(" ")[1]}'.split(".")[0].replace(':', "-")
         if self.mode == "feature_extractor":
-            self.save_name = f"DeTraC_feature_extractor_{now}.hdf5"
+            self.save_name = f"DeTraC_feature_extractor_{now}"
             self.optimizer = SGD(
                 learning_rate = 1e-4,
                 momentum = 0.9,
@@ -91,7 +101,7 @@ class Net(object):
             )
         else:
             assert len(class_names) == num_classes
-            self.save_name = f"DeTraC_feature_composer_{now}.hdf5"
+            self.save_name = f"DeTraC_feature_composer_{now}"
             self.optimizer = SGD(
                 learning_rate = 1e-4,
                 momentum = 0.95,
@@ -127,22 +137,25 @@ class Net(object):
     ):
 
         # TODO: Augment data for feature composer
-
-        model_paths_list = []
         
-        checkpointer_callback = ModelCheckpoint(
-            filepath = self.model_path,
-            verbose = 1,
-            save_best_only = True
+        custom_callback = DeTraC_callback(
+            model = self.model,
+            num_epochs = epochs,
+            filepath = self.model_path
         )
-        custom_callback = DeTraC_callback(model = self.model)
         
         if resume == True:
+            model_paths_list = []
             for i, model_path in enumerate(os.listdir(self.model_dir)):
-                if model_path.endswith(".h5"):
-                    print(f"{i}) {model}")
-                    model_paths_list.append(model)
-            
+                if self.mode == "feature_extractor":
+                    if "feature_extractor" in model_path:
+                        print(f"{i}) {model}")
+                        model_paths_list.append(model)
+                else:
+                    if "feature_composer" in model_path:
+                        print(f"{i}) {model}")
+                        model_paths_list.append(model)
+                
             assert len(model_paths_list > 0)
             
             model_path_choice = -1
@@ -167,8 +180,7 @@ class Net(object):
                 verbose = 1,
                 callbacks = [
                     self.scheduler, 
-                    custom_callback,
-                    checkpointer_callback
+                    custom_callback
                 ]
             )
         else:
@@ -185,8 +197,7 @@ class Net(object):
                 verbose = 1,
                 callbacks = [
                     self.scheduler, 
-                    custom_callback,
-                    checkpointer_callback
+                    custom_callback
                 ]
             )
 
