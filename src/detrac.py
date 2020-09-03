@@ -15,7 +15,10 @@ TORCH_CKPT_DIR = "../models/torch"
 # TODO: Document and proofread
 # TODO: Fix / implement save and resume mechanic OR get rid of it (not ideal)
 # TODO: Do more in-depth testing
-
+# TODO: Test on new data. Add whatever you added to tf backend onto torch backend.
+# TODO: Fix more stuff
+# TODO: Add args as alternative to prompts
+# TODO: Test inference on images.
 
 def training(args):
     num_epochs = int(input("Number of epochs: "))

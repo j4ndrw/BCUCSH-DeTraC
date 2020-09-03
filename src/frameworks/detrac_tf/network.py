@@ -9,47 +9,6 @@ import os
 import time
 from datetime import datetime
 
-
-class DeTraC_model(tf.keras.Model):
-    def __init__(self, pretrained_model, num_classes: int, mode: str, class_names: list = None):
-        super(DeTraC_model, self).__init__()
-
-        self.pretrained_model = pretrained_model
-        self.mode = mode
-        self.num_classes = num_classes
-
-        self._initial_epoch = 0
-        self._use_for_extraction = False
-
-        self.custom_weights = lambda shape, dtype = None: \
-            tf.Variable(lambda: tf.random.normal(shape) * 0.0001)
-
-        self.custom_biases = lambda shape, dtype = None: \
-            tf.Variable(lambda: tf.random.normal(shape) * 0.0001 + 1)
-
-        self.pretrained_layers = Sequential(pretrained_model.layers[:-2])
-        self.classification_layer = Dense(
-            units=self.num_classes,
-            activation='softmax',
-            kernel_initializer=self.custom_weights,
-            bias_initializer=self.custom_biases
-        )
-
-        if self.mode == "feature_extractor":
-            self.pretrained_layers.trainable = False
-            self.classification_layer.trainable = True
-        else:
-            self.pretrained_layers.trainable = True
-            self.classification_layer.trainable = True
-            self.class_names = class_names
-
-    def call(self, x):
-        x = self.pretrained_layers(x)
-        if self._use_for_extraction == False:
-            x = self.classification_layer(x)
-        return x
-
-
 class DeTraC_callback(tf.keras.callbacks.Callback):
     def __init__(self, model, num_epochs, filepath):
         super(DeTraC_callback, self).__init__()
@@ -95,7 +54,27 @@ class Net(object):
         now = datetime.now()
         now = f'{str(now).split(" ")[0]}_{str(now).split(" ")[1]}'.split(
             ".")[0].replace(':', "-")
+
+#         self.model = DeTraC_model(pretrained_model=self.pretrained_model,
+#                                   num_classes=self.num_classes, mode=self.mode, class_names=self.class_names)
+    
+        self.custom_weights = lambda shape, dtype = None: \
+            tf.Variable(lambda: tf.random.normal(shape) * 0.0001)
+
+        self.custom_biases = lambda shape, dtype = None: \
+            tf.Variable(lambda: tf.random.normal(shape) * 0.0001 + 1)
+
+        self.pretrained_layers = Sequential(pretrained_model.layers[:-2])
+        self.classification_layer = Dense(
+            units=self.num_classes,
+            activation='softmax',
+            kernel_initializer=self.custom_weights,
+            bias_initializer=self.custom_biases
+        )
+
         if self.mode == "feature_extractor":
+            self.pretrained_layers.trainable = False
+            self.classification_layer.trainable = True
             self.save_name = f"DeTraC_feature_extractor_{now}"
             self.optimizer = SGD(
                 learning_rate=1e-4,
@@ -109,6 +88,8 @@ class Net(object):
                 patience=3
             )
         else:
+            self.pretrained_layers.trainable = True
+            self.classification_layer.trainable = True
             assert len(class_names) == num_classes
             self.save_name = f"DeTraC_feature_composer_{now}"
             self.optimizer = SGD(
@@ -122,9 +103,8 @@ class Net(object):
                 factor=0.95,
                 patience=5
             )
-
-        self.model = DeTraC_model(pretrained_model=self.pretrained_model,
-                                  num_classes=self.num_classes, mode=self.mode, class_names=self.class_names)
+            
+        self.model = Sequential([self.pretrained_layers, self.classification_layer])
         self.model_path = os.path.join(self.model_dir, self.save_name)
 
         self.model.compile(
@@ -186,7 +166,6 @@ class Net(object):
                 validation_data=(x_test, y_test),
                 validation_freq=1,
                 shuffle=True,
-                initial_epoch=self.model._initial_epoch,
                 verbose=1,
                 callbacks=[
                     self.scheduler,
@@ -203,7 +182,6 @@ class Net(object):
                 validation_data=(x_test, y_test),
                 validation_freq=1,
                 shuffle=True,
-                initial_epoch=self.model._initial_epoch,
                 verbose=1,
                 callbacks=[
                     self.scheduler,
@@ -212,15 +190,17 @@ class Net(object):
             )
 
     def infer(self, input_data, use_labels):
-        input_data = input_data.reshape(-1, 224, 224, 3)
-        output = self.model.predict(input_data, verbose=2)
-
+        output = self.model.predict(input_data)
         if use_labels == True:
-            labels = self.model.class_names
+            labels = self.class_names
             labeled_output = {labels[output.argmax()]: output}
+            return labeled_output
         else:
             return output
 
     def infer_using_pretrained_layers_without_last(self, features):
-        self.model._use_for_extraction = True
-        return self.model.predict(features)
+        extractor = Sequential()
+        for layer in self.model.layers[:-1]:
+            extractor.add(layer)
+        output = extractor.predict(features)
+        return output

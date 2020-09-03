@@ -54,7 +54,7 @@ def train_feature_composer(
     )
 
     compute_confusion_matrix(y_true=Y_test, y_pred=net.infer(
-        X_test), framework="tf", mode="feature_composer")
+        X_test), framework="tf", mode="feature_composer", num_classes = num_classes)
 
 
 def infer(model_dir, model_name, input_image):
