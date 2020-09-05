@@ -9,6 +9,7 @@ import os
 import time
 from datetime import datetime
 
+# Callback used for saving
 class DeTraC_callback(tf.keras.callbacks.Callback):
     def __init__(self, model, num_epochs, filepath):
         super(DeTraC_callback, self).__init__()
@@ -27,7 +28,7 @@ class DeTraC_callback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         self.model._initial_epoch = epoch
 
-
+# The network
 class Net(object):
     """
     The DeTraC model.
@@ -42,29 +43,44 @@ class Net(object):
         class_names: list = None
     ):
 
+        """
+        params:
+            <inherits nn.Module> pretrained_model: VGG, AlexNet or whatever other ImageNet pretrained model is chosen
+            <int> num_classes
+            <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
+                                - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
+                                - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
+            <list> class_names
+        """
+
         self.pretrained_model = pretrained_model
         self.mode = mode
         self.num_classes = num_classes
         self.class_names = class_names
         self.model_dir = model_dir
 
+        # Check if model directory exists
         assert os.path.exists(self.model_dir)
+
+        # Check whether mode is correct
         assert self.mode == "feature_extractor" or self.mode == "feature_composer"
 
         now = datetime.now()
         now = f'{str(now).split(" ")[0]}_{str(now).split(" ")[1]}'.split(
             ".")[0].replace(':', "-")
 
-#         self.model = DeTraC_model(pretrained_model=self.pretrained_model,
-#                                   num_classes=self.num_classes, mode=self.mode, class_names=self.class_names)
-    
+        # Initialize custom weights
         self.custom_weights = lambda shape, dtype = None: \
             tf.Variable(lambda: tf.random.normal(shape) * 0.0001)
 
+        # Initialize custom biases
         self.custom_biases = lambda shape, dtype = None: \
             tf.Variable(lambda: tf.random.normal(shape) * 0.0001 + 1)
 
+        # Pretrained layers
         self.pretrained_layers = Sequential(pretrained_model.layers[:-2])
+        
+        # Custom classification layer
         self.classification_layer = Dense(
             units=self.num_classes,
             activation='softmax',
@@ -72,6 +88,9 @@ class Net(object):
             bias_initializer=self.custom_biases
         )
 
+        # Set the save path, freeze or unfreeze the gradients based on the mode and define appropriate optimizers and schedulers.
+        # Feature extractor => Freeze all gradients except the custom classification layer
+        # Feature composer => Unfreeze / Activate all gradients
         if self.mode == "feature_extractor":
             self.pretrained_layers.trainable = False
             self.classification_layer.trainable = True
@@ -104,9 +123,11 @@ class Net(object):
                 patience=5
             )
             
+        # Instantiate model
         self.model = Sequential([self.pretrained_layers, self.classification_layer])
         self.model_path = os.path.join(self.model_dir, self.save_name)
 
+        # Compile model
         self.model.compile(
             optimizer=self.optimizer,
             loss="categorical_crossentropy",
@@ -123,16 +144,38 @@ class Net(object):
         batch_size: int,
         resume: bool
     ):
+        """
+        Training function for the DeTraC model.
 
-        # TODO: Augment data for feature composer
+        params:
+            <array> x_train
+            <array> y_train
+            <array> x_test
+            <array> y_test
+            <int> epochs
+            <int> batch_size 
+            <bool> resume
+        """
 
+        # If the feature composer is being used, augment the data
+        if self.mode == "feature_composer":
+            # Instantiate an image data generator
+            datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+                featurewise_std_normalization = True,
+                horizontal_flip = True
+            )
+            datagen.fit(x_train)
+
+        # Instantiate the custom DeTraC callback
         custom_callback = DeTraC_callback(
             model=self.model,
             num_epochs=epochs,
             filepath=self.model_path
         )
 
+        # If user wants to resume
         if resume == True:
+            # List of models
             model_paths_list = []
             for i, model_path in enumerate(os.listdir(self.model_dir)):
                 if self.mode == "feature_extractor":
@@ -144,8 +187,10 @@ class Net(object):
                         print(f"{i + 1}) {model_path}")
                         model_paths_list.append(model_path)
 
+            # Check if there are available models
             assert len(model_paths_list) > 0
 
+            # Prompt the user for a choice
             model_path_choice = -1
             while model_path_choice > len(model_paths_list) or model_path_choice < 1:
                 model_path_choice = int(input(
@@ -154,42 +199,90 @@ class Net(object):
             model_path = os.path.join(
                 self.model_dir, model_paths_list[model_path_choice - 1])
 
+            # Load model
             load_model(
                 filepath=model_path,
                 compile=False
             )
-            self.model.fit(
-                x=x_train,
-                y=y_train,
-                batch_size=batch_size,
-                epochs=epochs,
-                validation_data=(x_test, y_test),
-                validation_freq=1,
-                shuffle=True,
-                verbose=1,
-                callbacks=[
-                    self.scheduler,
-                    custom_callback
-                ]
-            )
+            
+            # Train.
+            # If the feature extractor is selected, train normally
+            if self.mode == "feature_extractor":
+                self.model.fit(
+                    x=x_train,
+                    y=y_train,
+                    batch_size=batch_size,
+                    epochs=epochs,
+                    validation_data=(x_test, y_test),
+                    validation_freq=1,
+                    shuffle=True,
+                    verbose=1,
+                    callbacks=[
+                        self.scheduler,
+                        custom_callback
+                    ]
+                )
+            # Otherwise, train on augmented data
+            else:
+                self.model.fit(
+                    x=datagen.flow(x_train, y_train, batch_size=batch_size),
+                    epochs=epochs,
+                    validation_data=(x_test, y_test),
+                    validation_freq=1,
+                    steps_per_epoch=len(x_train) // batch_size,
+                    shuffle=True,
+                    verbose=1,
+                    callbacks=[
+                        self.scheduler,
+                        custom_callback
+                    ]
+                )
+            
+        # If the user doesn't want to resume, train normally
         else:
-            self.model._initial_epoch = 0
-            self.model.fit(
-                x=x_train,
-                y=y_train,
-                batch_size=batch_size,
-                epochs=epochs,
-                validation_data=(x_test, y_test),
-                validation_freq=1,
-                shuffle=True,
-                verbose=1,
-                callbacks=[
-                    self.scheduler,
-                    custom_callback
-                ]
-            )
+            if self.mode == "feature_extractor":
+                self.model.fit(
+                    x=x_train,
+                    y=y_train,
+                    batch_size=batch_size,
+                    epochs=epochs,
+                    validation_data=(x_test, y_test),
+                    validation_freq=1,
+                    shuffle=True,
+                    verbose=1,
+                    callbacks=[
+                        self.scheduler,
+                        custom_callback
+                    ]
+                )
+            else:
+                self.model.fit(
+                    x=datagen.flow(x_train, y_train, batch_size=batch_size),
+                    epochs=epochs,
+                    validation_data=(x_test, y_test),
+                    validation_freq=1,
+                    steps_per_epoch=len(x_train) // batch_size,
+                    shuffle=True,
+                    verbose=1,
+                    callbacks=[
+                        self.scheduler,
+                        custom_callback
+                    ]
+                )
 
+    # Inference
     def infer(self, input_data, use_labels):
+        """
+        Inference function.
+
+        params:
+            <array> input_data
+            <bool> use_labels: Whether to output nicely, with a description of the labels, or not
+        returns:
+            <array> prediction
+        """
+
+        # Prediction
         output = self.model.predict(input_data)
         if use_labels == True:
             labels = self.class_names
@@ -199,8 +292,22 @@ class Net(object):
             return output
 
     def infer_using_pretrained_layers_without_last(self, features):
+        """
+        Feature extractor's inference function.
+
+        params:
+            <array> features
+        returns:
+            <array> NxN array representing the features of an image
+        """
+        
+        # Instantiate a sequential model
         extractor = Sequential()
+
+        # Add all the pretrained layers to it
         for layer in self.model.layers[:-1]:
             extractor.add(layer)
+
+        # Use the extractor to predict upon the input image
         output = extractor.predict(features)
         return output

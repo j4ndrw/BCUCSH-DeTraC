@@ -1,6 +1,5 @@
 from sklearn.model_selection import KFold
 
-
 def KFold_cross_validation_split(features, labels, n_splits):
     """
     KFold Cross Validation split
@@ -11,15 +10,15 @@ def KFold_cross_validation_split(features, labels, n_splits):
         Test data = K%
 
     params:
-        <NDarray> Features
-        <NDarray> Labels
+        <array> Features
+        <array> Labels
         <int> n_splits
 
     returns:
-        <NDarray> x_train = Feature train set
-        <NDarray> x_test = Feature test set
-        <NDarray> y_train = Label train set
-        <NDarray> y_test = Label test set
+        <array> x_train = Feature train set
+        <array> x_test = Feature test set
+        <array> y_train = Label train set
+        <array> y_test = Label test set
     """
 
     kfold = KFold(n_splits=n_splits, shuffle=True)
