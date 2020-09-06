@@ -11,7 +11,14 @@ from .multiclass_confusion_matrix import multiclass_confusion_matrix
 from tqdm import tqdm
 
 # Feature extraction function
-def extract_features(initial_dataset_path, class_name, width, height, net, framework):
+def extract_features(
+    initial_dataset_path: str, 
+    class_name: str, 
+    width: int, 
+    height: int,
+    net,
+    framework: str
+) -> np.ndarray:
     """
     params:
         <string> initial_dataset_path = Path where initial data is located
@@ -50,11 +57,9 @@ def extract_features(initial_dataset_path, class_name, width, height, net, frame
 
         # Preprocess images for pretrained model
         if framework == "torch":
-            img = tf.keras.applications.imagenet_utils.preprocess_input(
-                img, mode="torch")
+            img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode="torch")
         else:
-            img = tf.keras.applications.imagenet_utils.preprocess_input(
-                img, mode="tf")
+            img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode="tf")
 
         # Append image array to features list
         features.append(img)
@@ -66,9 +71,12 @@ def extract_features(initial_dataset_path, class_name, width, height, net, frame
     return net.infer_using_pretrained_layers_without_last(features)
 
 # Matlab equivalent of blockproc
-def compose_classes(cmat, block_size: tuple):
+def compose_classes(
+    cmat: np.ndarray, 
+    block_size: tuple
+) -> np.ndarray:
+
     sizes = list(tuple(np.array(cmat.shape) // block_size) + block_size)
-    
     for i in range(len(sizes)):
         if (i + 1) == len(sizes) - 1:
             break
@@ -82,7 +90,13 @@ def compose_classes(cmat, block_size: tuple):
     return composed
 
 # Metrics
-def compute_confusion_matrix(y_true, y_pred, framework: str, mode: str, num_classes: int):
+def compute_confusion_matrix(
+    y_true: np.ndarray, 
+    y_pred: np.ndarray, 
+    framework: str, 
+    mode: str, 
+    num_classes: int
+):
     """
     params:
         <array> y_true: Ground truth labels
@@ -99,8 +113,11 @@ def compute_confusion_matrix(y_true, y_pred, framework: str, mode: str, num_clas
     assert mode == "feature_extractor" or mode == "feature_composer"
     
     # Create confusion matrix and normalize it
-    cmat = confusion_matrix(y_true.argmax(
-        axis=1), y_pred.argmax(axis=1), normalize="all")
+    cmat = confusion_matrix(
+        y_true=y_true.argmax(axis=1), 
+        y_pred=y_pred.argmax(axis=1), 
+        normalize="all"
+    )
     
     # If the feature composer was selected, divide the confusion matrix by NxN kernels
     if mode == "feature_composer":

@@ -7,7 +7,15 @@ import numpy as np
 from tqdm import tqdm
 
 # Preprocessing used for inference using pretrained layers for feature extraction
-def preprocess_single_image(img, width, height, framework: str, imagenet: bool = False):
+
+
+def preprocess_single_image(
+    img: str,
+    width: int,
+    height: int,
+    framework: str,
+    imagenet: bool = False
+) -> np.ndarray:
     """
     Preprocesses images one by one to prepare them for feature extraction.
 
@@ -31,7 +39,7 @@ def preprocess_single_image(img, width, height, framework: str, imagenet: bool =
 
     # Resize to the required size
     img = cv2.resize(img, (width, height))
-    
+
     # Convert image to array
     img = tf.keras.preprocessing.image.img_to_array(img)
     img = np.expand_dims(img, axis=0)
@@ -39,15 +47,20 @@ def preprocess_single_image(img, width, height, framework: str, imagenet: bool =
     # Preprocessing for feature composer
     if imagenet == True:
         if framework == "torch":
-            img = tf.keras.applications.imagenet_utils.preprocess_input(
-                img, mode="torch")
+            img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode="torch")
         else:
-            img = tf.keras.applications.imagenet_utils.preprocess_input(
-                img, mode="tf")
+            img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode="tf")
     return img
 
 
-def preprocess_images(dataset_path, width, height, num_classes, framework: str, imagenet: bool = False):
+def preprocess_images(
+    dataset_path: str,
+    width: int,
+    height: int,
+    num_classes: int,
+    framework: str,
+    imagenet: bool = False
+) -> [list, np.ndarray, np.ndarray]:
     """
     Preprocessing of dataset before training.
 
@@ -94,8 +107,7 @@ def preprocess_images(dataset_path, width, height, num_classes, framework: str, 
             if filename.lower().endswith("png") or filename.lower().endswith("jpg") or filename.lower().endswith("jpeg"):
 
                 # Read the grayscale image
-                gray_img = cv2.imread(os.path.join(
-                    dataset_path, folder, filename))
+                gray_img = cv2.imread(os.path.join(dataset_path, folder, filename))
 
                 # Convert that image to RGB
                 color_img = cv2.cvtColor(gray_img, cv2.COLOR_BGR2RGB)
@@ -110,27 +122,24 @@ def preprocess_images(dataset_path, width, height, num_classes, framework: str, 
                 # Preprocessing for feature composer
                 if imagenet == True:
                     if framework == "torch":
-                        img = tf.keras.applications.imagenet_utils.preprocess_input(
-                            img, mode="torch")
+                        img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode="torch")
                     else:
-                        img = tf.keras.applications.imagenet_utils.preprocess_input(
-                            img, mode="tf")
+                        img = tf.keras.applications.imagenet_utils.preprocess_input(img, mode="tf")
 
                 # Add the image array to the features list
                 features.append(img)
 
                 # Add the appropriate row from the identity matrix to the labels list
-                # E.g.: If the classes are: COVID, NORMAL and PNEUMONIA, 
+                # E.g.: If the classes are: COVID, NORMAL and PNEUMONIA,
                 # the labels will be [1, 0, 0], [0, 1, 0] and [0, 0, 1].
                 labels.append(identity_matrix[class_names.index(folder)])
 
-                file_progress_bar.set_description(
-                    f"Loading images from directory {folder}")
+                file_progress_bar.set_description(f"Loading images from directory {folder}")
 
     # Convert the features list to a vertical stack array.
     # This gets rid of any array of length 1.
     # E.g.: Let (num_images, 1, width, height, channels) be the shape of the features array before converting to a stack array
-    # After conversion, the features array will have the shape of (num_images, width, height, channels) 
+    # After conversion, the features array will have the shape of (num_images, width, height, channels)
     features = np.vstack(features)
 
     # Convert the labels list to an array

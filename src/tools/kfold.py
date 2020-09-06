@@ -1,6 +1,11 @@
+import numpy as np
 from sklearn.model_selection import KFold
 
-def KFold_cross_validation_split(features, labels, n_splits):
+def KFold_cross_validation_split(
+    features: np.ndarray, 
+    labels: np.ndarray, 
+    n_splits: int
+) -> [np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     KFold Cross Validation split
 

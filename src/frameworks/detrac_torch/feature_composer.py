@@ -16,13 +16,13 @@ import cv2
 
 # Feature composer training
 def train_feature_composer(
-    composed_dataset_path,
-    epochs,
-    batch_size,
-    num_classes,
-    folds,
-    cuda,
-    ckpt_dir
+    composed_dataset_path: str,
+    epochs: int,
+    batch_size: int,
+    num_classes: int,
+    folds: int,
+    cuda: bool,
+    ckpt_dir: str
 ):
     """
     Feature extractor training.
@@ -39,11 +39,20 @@ def train_feature_composer(
 
     # Preprocess images, returning the classes, features and labels
     class_names, x, y = preprocess_images(
-        composed_dataset_path, 224, 224, num_classes, framework="torch", imagenet=True)
+        dataset_path=composed_dataset_path, 
+        width=224, 
+        height=224, 
+        num_classes=num_classes, 
+        framework="torch", 
+        imagenet=True
+    )
 
     # Split data
     X_train, X_test, Y_train, Y_test = KFold_cross_validation_split(
-        x, y, folds)
+        features=x, 
+        labels=y, 
+        n_splits=folds
+    )
 
     # Normalize
     X_train /= 255
@@ -71,11 +80,28 @@ def train_feature_composer(
     )
 
     # Confusion matrix
-    compute_confusion_matrix(y_true=Y_test, y_pred=net.infer(
-        X_test), framework="torch", mode="feature_composer", num_classes = num_classes // 2)
+    compute_confusion_matrix(
+        y_true=Y_test, 
+        y_pred=net.infer(X_test), 
+        framework="torch", 
+        mode="feature_composer", 
+        num_classes = num_classes // 2
+    )
 
 # Inference
-def infer(ckpt_dir, ckpt_name, input_image):
+def infer(
+    ckpt_dir: str, 
+    ckpt_name: str, 
+    input_image: str
+) -> dict:
+    """
+    Inference method.
+
+    params:
+        <string> ckpt_dir
+        <string> ckpt_name
+        <string> input_image
+    """
     ckpt_path = os.path.join(ckpt_dir, ckpt_name)
     num_classes = torch.load(ckpt_path, map_location=lambda storage, loc: storage)["num_classes"]
     
@@ -91,12 +117,16 @@ def infer(ckpt_dir, ckpt_name, input_image):
     net.load_model_for_inference(os.path.join(ckpt_dir, ckpt_name))
     
     # Check if inputed file is an image.
-    assert input_image.lower().endswith("png") or input_image.lower().endswith(
-        "jpg") or input_image.lower().endswith("jpeg")
+    assert input_image.lower().endswith("png") or input_image.lower().endswith("jpg") or input_image.lower().endswith("jpeg")
 
     # Preprocess
     img = preprocess_single_image(
-        input_image, 224, 224, imagenet=True, framework="torch")
+        img=input_image, 
+        width=224, 
+        height=224, 
+        imagenet=True, 
+        framework="torch"
+    )
 
     # Return prediction
     return net.infer(img, ckpt_path = os.path.join(ckpt_dir, ckpt_name), use_labels=True)

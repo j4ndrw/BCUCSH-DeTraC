@@ -14,7 +14,10 @@ from datetime import datetime
 from tqdm import tqdm
 
 # Function used to choose computation device.
-def set_device(var, use_cuda):
+def set_device(
+    var, 
+    use_cuda: bool
+):
     """
     Gets tensor or nn variable ready for computation on a device.
 
@@ -78,6 +81,7 @@ class Net(object):
             <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
                                 - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
                                 - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
+            <list> labels: The text labels to be saved inside the model.
         """
 
         self.mode = mode
@@ -104,7 +108,9 @@ class Net(object):
 
         # Introduce a new layer of computation
         self.classification_layer = nn.Linear(
-            in_features=self.input_size, out_features=self.num_classes)
+            in_features=self.input_size, 
+            out_features=self.num_classes
+        )
         self.softmax_activation = nn.Softmax(dim=1)
 
         # Set the weights and biases accordingly
@@ -114,7 +120,9 @@ class Net(object):
 
         # Prepare the layer for computation on the selected device
         self.classification_layer = set_device(nn.Sequential(
-            self.classification_layer, self.softmax_activation), self.cuda)
+            self.classification_layer, 
+            self.softmax_activation
+        ), self.cuda)
 
         # Replace the pretrained classification layer with the custom classification layer
         try:
@@ -126,8 +134,7 @@ class Net(object):
         # Feature extractor => Freeze all gradients except the custom classification layer
         # Feature composer => Unfreeze / Activate all gradients
         now = datetime.now()
-        now = f'{str(now).split(" ")[0]}_{str(now).split(" ")[1]}'.split(
-            ".")[0].replace(':', "-")
+        now = f'{str(now).split(" ")[0]}_{str(now).split(" ")[1]}'.split(".")[0].replace(':', "-")
         if self.mode == "feature_extractor":
             self.save_name = f"DeTraC_feature_extractor_{now}.pth"
 
@@ -181,7 +188,14 @@ class Net(object):
         # Categorical crossentropy is a negative log likelihood loss, where the logit is the log of the model's output, and the label is the argmax from the list of labels
         self.criterion = nn.NLLLoss()
 
-    def save(self, epoch, train_loss, train_acc, val_loss, val_acc):
+    def save(
+        self, 
+        epoch: int, 
+        train_loss: float, 
+        train_acc: float, 
+        val_loss: float, 
+        val_acc: float
+    ):
         """
         Save the model's gradients, as well as the optimizer's latent gradients.
         Also save some additional data, such as epoch, loss and accuracy.
@@ -205,11 +219,23 @@ class Net(object):
             "num_classes": self.num_classes
         }, self.ckpt_path)
 
-    def load_model_for_inference(self, ckpt_path):
+    def load_model_for_inference(
+        self, 
+        ckpt_path: str
+    ):
+        """
+        Loads the model's state for inference.
+
+        params:
+            <string> ckpt_path: Model's path
+        """
         checkpoint = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
         self.model.load_state_dict(checkpoint['model_state_dict'])
     
-    def load(self, *args):
+    def load(
+        self, 
+        *args
+    ) -> list:
         """
         Load the model on GPU or CPU.
 
@@ -224,9 +250,6 @@ class Net(object):
         prompt = input("Load on GPU or CPU [GPU / CPU]\n")
         while prompt != "GPU" and prompt != "CPU":
             prompt = input("Load on GPU or CPU? [GPU / CPUs]\n")
-
-        # Check if model exists
-#         assert os.path.exists(self.ckpt_path)
 
         print("Loading checkpoint")
         # Load model on selected computation device
@@ -257,7 +280,10 @@ class Net(object):
         if len(loaded_args) != 0:
             return loaded_args
 
-    def load_labels_for_inference(self, ckpt_path):
+    def load_labels_for_inference(
+        self, 
+        ckpt_path: str
+    ):
         """
         Load labels from the model's checkpoint 
         """
@@ -266,7 +292,10 @@ class Net(object):
             ckpt_path, map_location=lambda storage, loc: storage)
         return checkpoint['labels']
 
-    def train_step(self, train_loader):
+    def train_step(
+        self, 
+        train_loader: DataLoader
+    ) -> [float, float]:
         """
         Model's training step.
 
@@ -328,7 +357,10 @@ class Net(object):
 
         return err, acc
 
-    def validation_step(self, validation_loader):
+    def validation_step(
+        self, 
+        validation_loader: DataLoader
+    ) -> [float, float]:
         """
         Model's validation step.
 
@@ -385,10 +417,10 @@ class Net(object):
 
     def fit(
         self,
-        x_train,
-        y_train,
-        x_test,
-        y_test,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        x_test: np.ndarray,
+        y_test: np.ndarray,
         epochs: int,
         batch_size: int,
         resume: bool
@@ -422,24 +454,34 @@ class Net(object):
                 transforms.ToPILImage("RGB"),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [
-                                     0.229, 0.224, 0.225])
+                transforms.Normalize(
+                    [0.485, 0.456, 0.406], 
+                    [0.229, 0.224, 0.225]
+                )
             ])
 
             val_transform = transforms.Compose([
                 transforms.ToPILImage("RGB"),
                 transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [
-                                     0.229, 0.224, 0.225])
+                transforms.Normalize(
+                    [0.485, 0.456, 0.406], 
+                    [0.229, 0.224, 0.225]
+                )
             ])
 
             x_train_ds = augmented_data(x_train, train_transform)
             x_test_ds = augmented_data(x_test, val_transform)
 
-            train_loader = DataLoader(dataset=list(
-                zip(x_train_ds, y_train)), shuffle=True, batch_size=batch_size)
-            validation_loader = DataLoader(dataset=list(
-                zip(x_test_ds, y_test)), shuffle=True, batch_size=batch_size)
+            train_loader = DataLoader(
+                dataset=list(zip(x_train_ds, y_train)), 
+                shuffle=True, 
+                batch_size=batch_size
+            )
+            validation_loader = DataLoader(
+                dataset=list(zip(x_test_ds, y_test)), 
+                shuffle=True, 
+                batch_size=batch_size
+            )
 
         start_epoch = 0
         # If the user chooses to resume
@@ -463,8 +505,7 @@ class Net(object):
             # Prompt user for a choice
             ckpt_path_choice = -1
             while ckpt_path_choice > len(model_paths_list) or ckpt_path_choice < 1:
-                ckpt_path_choice = int(input(
-                    f"Which model would you like to load? [Number between 1 and {len(ckpt_paths_list)}]: "))
+                ckpt_path_choice = int(input(f"Which model would you like to load? [Number between 1 and {len(ckpt_paths_list)}]: "))
 
             ckpt_path = os.path.join(
                 self.ckpt_dir, ckpt_paths_list[ckpt_path_choice - 1])
@@ -520,12 +561,18 @@ class Net(object):
                 progress_bar.set_description(
                     f"[Epoch {epoch + 1} stats]: train_loss = {train_loss:.2f} | train_acc = {train_acc:.2f}% | val_loss = {val_loss:.2f} | val_acc = {val_acc:.2f}%")
 
-    def infer(self, input_data, ckpt_path = None, use_labels=False):
+    def infer(
+        self, 
+        input_data: np.ndarray, 
+        ckpt_path: bool = None, 
+        use_labels: bool = False
+    ) -> dict or np.ndarray:
         """
         The model's inference process.
 
         params:
             <array> input_data
+            <string> ckpt_path: Model's path
             <bool> use_labels: Whether to output nicely, with a description of the labels, or not
         returns:
             <array> prediction
@@ -544,7 +591,11 @@ class Net(object):
             output = self.model.cpu()(input_data).numpy()
 
             if use_labels == True:
+
+                # Check if a model path is given
                 assert ckpt_path != None
+
+                # Create a dictionary of the shape: <label> : <confidence>
                 labeled_output = {}
                 labels = self.load_labels_for_inference(ckpt_path)
                 for label, out in zip(labels, output[0]):
@@ -553,7 +604,10 @@ class Net(object):
             else:
                 return output
 
-    def infer_using_pretrained_layers_without_last(self, features):
+    def infer_using_pretrained_layers_without_last(
+        self, 
+        features: np.ndarray
+    ) -> np.ndarray:
         """
         Used when extracting the features.
 

@@ -8,7 +8,13 @@ import cv2
 
 from tqdm import tqdm
 
-def decompose(path_to_features, path_to_images, path_to_decomposed_images_1, path_to_decomposed_images_2, class_name):
+def decompose(
+    path_to_features: str, 
+    path_to_images: str, 
+    path_to_decomposed_images_1: str, 
+    path_to_decomposed_images_2: str, 
+    class_name: str
+):
     """
     Decomposition of extracted features using KMeans clustering.
 
@@ -52,7 +58,11 @@ def decompose(path_to_features, path_to_images, path_to_decomposed_images_1, pat
         else:
             plt.imsave(filename_2, I)
 
-def execute_decomposition(initial_dataset_path, composed_dataset_path, features_path):
+def execute_decomposition(
+    initial_dataset_path: str, 
+    composed_dataset_path: str, 
+    features_path: str
+):
     """
     Decomposes features in a separate dataset
 
@@ -98,9 +108,7 @@ def execute_decomposition(initial_dataset_path, composed_dataset_path, features_
         decompose(
             path_to_features=os.path.join(features_path, f"{class_name}.npy"),
             path_to_images=os.path.join(initial_dataset_path, class_name),
-            path_to_decomposed_images_1=os.path.join(
-                composed_dataset_path, f"{class_name}_1/"),
-            path_to_decomposed_images_2=os.path.join(
-                composed_dataset_path, f"{class_name}_2/"),
+            path_to_decomposed_images_1=os.path.join(composed_dataset_path, f"{class_name}_1/"),
+            path_to_decomposed_images_2=os.path.join(composed_dataset_path, f"{class_name}_2/"),
             class_name=class_name
         )

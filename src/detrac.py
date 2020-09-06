@@ -132,8 +132,7 @@ def inference(args):
     assert os.path.exists(path_to_file)
 
     # Check if file is an image (no GIFs)
-    assert path_to_file.lower().endswith(".png") or path_to_file.lower().endswith(
-        ".jpg") or path_to_file.lower().endswith(".jpeg")
+    assert path_to_file.lower().endswith(".png") or path_to_file.lower().endswith(".jpg") or path_to_file.lower().endswith(".jpeg")
 
     # If user chose "Tensorflow" for the framework option
     if args.framework[0].lower() == "tf" or args.framework[0].lower() == "tensorflow":
@@ -148,8 +147,7 @@ def inference(args):
         # Prompt user to choose a model
         model_choice = -1
         while model_choice > len(model_list) or model_choice < 1:
-            model_choice = int(input(
-                f"Which model would you like to load? [Number between 1 and {len(model_list)}]: "))
+            model_choice = int(input(f"Which model would you like to load? [Number between 1 and {len(model_list)}]: "))
 
         # Predict
         prediction = detrac_tf.feature_composer.infer(
@@ -170,18 +168,19 @@ def inference(args):
         # Prompt user to choose a model
         model_choice = -1
         while model_choice > len(model_list) or model_choice < 1:
-            model_choice = int(input(
-                f"Which model would you like to load? [Number between 1 and {len(model_list)}]: "))
+            model_choice = int(input(f"Which model would you like to load? [Number between 1 and {len(model_list)}]: "))
 
         # Predict
         prediction = detrac_torch.feature_composer.infer(
-            TORCH_CKPT_DIR, model_list[model_choice - 1], path_to_file)
+            ckpt_dir=TORCH_CKPT_DIR, 
+            ckpt_name=model_list[model_choice - 1], 
+            input_image=path_to_file)
 
         print(f"Prediction: {list(prediction.keys())[0].split('_')[0]}")
         print(f"Confidence: \n{prediction}")
 
 # Function used to initialize repo with the necessary folders.
-def init_folders(path):
+def init_folders(path: str) -> bool:
     """
     Used to initialize folders if there aren't already there
 

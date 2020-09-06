@@ -1,7 +1,10 @@
 import numpy as np
 
 
-def multiclass_confusion_matrix(cmat, num_classes):
+def multiclass_confusion_matrix(
+    cmat: np.ndarray, 
+    num_classes: int
+) -> [np.float64, np.float64, np.float64]:
     """
     Multi-class confusion matrix.
 

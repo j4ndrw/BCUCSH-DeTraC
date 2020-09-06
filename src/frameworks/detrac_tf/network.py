@@ -1,5 +1,7 @@
+import numpy as np
+
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
@@ -11,7 +13,12 @@ from datetime import datetime
 
 # Callback used for saving
 class DeTraC_callback(tf.keras.callbacks.Callback):
-    def __init__(self, model, num_epochs, filepath):
+    def __init__(
+        self, 
+        model: Sequential, 
+        num_epochs: int, 
+        filepath: str
+    ):
         super(DeTraC_callback, self).__init__()
         self.model = model
         self.num_epochs = num_epochs
@@ -36,16 +43,16 @@ class Net(object):
 
     def __init__(
         self,
-        pretrained_model,
+        pretrained_model: Model,
         num_classes: int,
         mode: str,
         model_dir: str,
-        class_names: list = None
+        class_names: list = []
     ):
 
         """
         params:
-            <inherits nn.Module> pretrained_model: VGG, AlexNet or whatever other ImageNet pretrained model is chosen
+            <Sequential> pretrained_model: VGG, AlexNet or whatever other ImageNet pretrained model is chosen
             <int> num_classes
             <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
                                 - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
@@ -66,8 +73,7 @@ class Net(object):
         assert self.mode == "feature_extractor" or self.mode == "feature_composer"
 
         now = datetime.now()
-        now = f'{str(now).split(" ")[0]}_{str(now).split(" ")[1]}'.split(
-            ".")[0].replace(':', "-")
+        now = f'{str(now).split(" ")[0]}_{str(now).split(" ")[1]}'.split(".")[0].replace(':', "-")
 
         # Initialize custom weights
         self.custom_weights = lambda shape, dtype = None: \
@@ -136,10 +142,10 @@ class Net(object):
 
     def fit(
         self,
-        x_train,
-        y_train,
-        x_test,
-        y_test,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        x_test: np.ndarray,
+        y_test: np.ndarray,
         epochs: int,
         batch_size: int,
         resume: bool
@@ -196,8 +202,7 @@ class Net(object):
                 model_path_choice = int(input(
                     f"Which model would you like to load? [Number between 1 and {len(model_paths_list)}]: "))
 
-            model_path = os.path.join(
-                self.model_dir, model_paths_list[model_path_choice - 1])
+            model_path = os.path.join(self.model_dir, model_paths_list[model_path_choice - 1])
 
             # Load model
             load_model(
@@ -271,7 +276,11 @@ class Net(object):
                 )
 
     # Inference
-    def infer(self, input_data, use_labels):
+    def infer(
+        self, 
+        input_data: np.ndarray, 
+        use_labels: bool = False
+    ) -> dict or np.ndarray:
         """
         Inference function.
 
@@ -291,7 +300,10 @@ class Net(object):
         else:
             return output
 
-    def infer_using_pretrained_layers_without_last(self, features):
+    def infer_using_pretrained_layers_without_last(
+        self, 
+        features: np.ndarray
+    ) -> np.ndarray:
         """
         Feature extractor's inference function.
 

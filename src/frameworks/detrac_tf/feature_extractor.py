@@ -15,13 +15,13 @@ import cv2
 
 # Feature extractor training
 def train_feature_extractor(
-    initial_dataset_path,
-    extracted_features_path,
-    epochs,
-    batch_size,
-    num_classes,
-    folds,
-    model_dir
+    initial_dataset_path: str,
+    extracted_features_path: str,
+    epochs: int,
+    batch_size: int,
+    num_classes: int,
+    folds: int,
+    model_dir: str
 ):
     """
     Feature extractor training.
@@ -38,11 +38,19 @@ def train_feature_extractor(
 
     # Preprocess images, returning the classes, features and labels
     class_names, x, y = preprocess_images(
-        initial_dataset_path, 224, 224, num_classes, framework="tf")
+        dataset_path=initial_dataset_path, 
+        width=224, 
+        height=224, 
+        num_classes=num_classes, 
+        framework="tf"
+    )
 
     # Split data
     X_train, X_test, Y_train, Y_test = KFold_cross_validation_split(
-        x, y, folds)
+        features=x, 
+        labels=y, 
+        n_splits=folds
+    )
 
     # Normalize
     X_train /= 255
@@ -74,10 +82,23 @@ def train_feature_extractor(
     # Extract features
     for class_name in class_names:
         extracted_features = extract_features(
-            initial_dataset_path, class_name, 224, 224, net, framework="tf")
-        np.save(os.path.join(extracted_features_path,
-                             f"{class_name}.npy"), extracted_features)
+            initial_dataset_path=initial_dataset_path, 
+            class_name=class_name, 
+            width=224, 
+            height=224, 
+            net=net, 
+            framework="tf"
+        )
+        np.save(
+            file=os.path.join(extracted_features_path, f"{class_name}.npy"), 
+            arr=extracted_features
+        )
 
     # Confusion matrics
-    compute_confusion_matrix(y_true=Y_test, y_pred=net.infer(
-        X_test, use_labels=False), framework="tf", mode="feature_extractor", num_classes = num_classes)
+    compute_confusion_matrix(
+        y_true=Y_test, 
+        y_pred=net.infer(X_test, use_labels=False), 
+        framework="tf", 
+        mode="feature_extractor", 
+        num_classes = num_classes
+    )
