@@ -18,7 +18,7 @@ def train_feature_composer(
     composed_dataset_path: str,
     epochs: int,
     batch_size: int,
-    num_classes: int
+    num_classes: int,
     folds: int,
     model_dir: str
 ):

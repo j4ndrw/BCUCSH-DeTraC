@@ -79,6 +79,15 @@ def train_feature_extractor(
         resume=False
     )
 
+    # Confusion matrics
+    compute_confusion_matrix(
+        y_true=Y_test, 
+        y_pred=net.infer(X_test, use_labels=False), 
+        framework="tf", 
+        mode="feature_extractor", 
+        num_classes = num_classes
+    )
+    
     # Extract features
     for class_name in class_names:
         extracted_features = extract_features(
@@ -93,12 +102,3 @@ def train_feature_extractor(
             file=os.path.join(extracted_features_path, f"{class_name}.npy"), 
             arr=extracted_features
         )
-
-    # Confusion matrics
-    compute_confusion_matrix(
-        y_true=Y_test, 
-        y_pred=net.infer(X_test, use_labels=False), 
-        framework="tf", 
-        mode="feature_extractor", 
-        num_classes = num_classes
-    )

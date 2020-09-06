@@ -17,10 +17,10 @@ TORCH_CKPT_DIR = os.path.join(GENERAL_MODELS_PATH, "torch")
 
 # TODO: Document and proofread
 # TODO: Fix / implement save and resume mechanic OR get rid of it (not ideal)
-# TODO: Do more in-depth testing
-# TODO: Test on new data. Add whatever you added to tf backend onto torch backend.
-# TODO: Fix more stuff
-# TODO: Test inference on images.
+# TODO: Implement different log mechanic for number of classes and labels (TF)
+# TODO: Test inference on images (TF).
+# TODO: Write appropriate readme
+# TODO: Create setup.py and build.py
 
 # Training option
 def training(args):
