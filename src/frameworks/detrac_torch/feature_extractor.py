@@ -56,7 +56,8 @@ def train_feature_extractor(
         num_classes=num_classes,
         cuda=cuda,
         mode="feature_extractor",
-        ckpt_dir=ckpt_dir
+        ckpt_dir=ckpt_dir,
+        labels=class_names
     )
 
     # Train model

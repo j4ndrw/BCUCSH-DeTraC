@@ -55,11 +55,9 @@ def train_feature_composer(
         num_classes=num_classes,
         cuda=cuda,
         mode="feature_composer",
-        ckpt_dir=ckpt_dir
+        ckpt_dir=ckpt_dir,
+        labels=class_names
     )
-
-    # Save labels for inference
-    net.save_labels_for_inference(labels=class_names)
 
     # Train model
     net.fit(
@@ -74,22 +72,24 @@ def train_feature_composer(
 
     # Confusion matrix
     compute_confusion_matrix(y_true=Y_test, y_pred=net.infer(
-        X_test), framework="torch", mode="feature_composer", num_classes = num_classes)
+        X_test), framework="torch", mode="feature_composer", num_classes = num_classes // 2)
 
 # Inference
 def infer(ckpt_dir, ckpt_name, input_image):
+    ckpt_path = os.path.join(ckpt_dir, ckpt_name)
+    num_classes = torch.load(ckpt_path, map_location=lambda storage, loc: storage)["num_classes"]
+    
     # Instantiate model
     net = Net(
         models.vgg16(pretrained=True),
         num_classes=num_classes,
-        cuda=cuda,
         mode="feature_composer",
         ckpt_dir=ckpt_dir
     )
-
+    
     # Load model
-    net.load(os.path.join(ckpt_dir, ckpt_name))
-
+    net.load_model_for_inference(os.path.join(ckpt_dir, ckpt_name))
+    
     # Check if inputed file is an image.
     assert input_image.lower().endswith("png") or input_image.lower().endswith(
         "jpg") or input_image.lower().endswith("jpeg")
@@ -99,4 +99,4 @@ def infer(ckpt_dir, ckpt_name, input_image):
         input_image, 224, 224, imagenet=True, framework="torch")
 
     # Return prediction
-    return net.infer(img, use_labels=True)
+    return net.infer(img, ckpt_path = os.path.join(ckpt_dir, ckpt_name), use_labels=True)

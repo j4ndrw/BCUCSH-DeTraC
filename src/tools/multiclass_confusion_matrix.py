@@ -35,8 +35,8 @@ def multiclass_confusion_matrix(cmat, num_classes):
                 FP += cmat[j][i]
                 FN += cmat[i][j]
 
-        acc[class_idx] = (TP + TN) / (TP + TN + FP + FN)
-        sn[class_idx] = TP / (TP + FN)
-        sp[class_idx] = TN / (TN + FP)
+        acc[i] = (TP + TN) / (TP + TN + FP + FN)
+        sn[i] = TP / (TP + FN)
+        sp[i] = TN / (TN + FP)
 
     return np.mean(acc), np.mean(sn), np.mean(sp)

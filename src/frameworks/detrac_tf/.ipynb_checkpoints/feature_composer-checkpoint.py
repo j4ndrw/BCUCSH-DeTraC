@@ -4,64 +4,100 @@ from tensorflow.keras.applications import VGG16
 
 import numpy as np
 
-from utils.preprocessing import preprocess_images
-from utils.kfold import KFold_cross_validation_split
-from utils.extraction_and_metrics import extract_features, compute_confusion_matrix
+from tools.preprocessing import preprocess_images
+from tools.kfold import KFold_cross_validation_split
+from tools.extraction_and_metrics import extract_features, compute_confusion_matrix
 
 from .network import Net
 
 import os
 import cv2
 
+# Feature composer training
 def train_feature_composer(
-        initial_dataset_path,
-        extracted_features_path,
-        epochs, 
-        batch_size, 
-        num_classes, 
-        folds
-    ):
+    composed_dataset_path,
+    epochs,
+    batch_size,
+    num_classes,
+    folds,
+    model_dir
+):
+    """
+    Feature extractor training.
 
-    class_names, x, y = preprocess_images(initial_dataset_path, 224, 224, num_classes, framework = "tf")
+    params:
+     <string> composed_dataset_path
+     <int> epochs
+     <int> batch_size
+     <int> num_classes
+     <int> folds: Number of folds for KFold cross validation 
+     <string> model_dir: Model's location
+    """
 
-    X_train, X_test, Y_train, Y_test = KFold_cross_validation_split(x, y, folds)
+    # Preprocess images, returning the classes, features and labels
+    class_names, x, y = preprocess_images(
+        composed_dataset_path, 224, 224, num_classes, framework="tf", imagenet=True)
 
+    # Split data
+    X_train, X_test, Y_train, Y_test = KFold_cross_validation_split(
+        x, y, folds)
+
+    # Normalize
     X_train /= 255
     X_test /= 255
 
+    # Instantiate model
     net = Net(
-        pretrained_model = VGG16(
-            input_shape = (224, 224, 3),
-            include_top = True
+        pretrained_model=VGG16(
+            input_shape=(224, 224, 3),
+            include_top=True
         ),
-        num_classes = num_classes,
-        mode = "feature_composer",
-        class_names = class_names
+        num_classes=num_classes,
+        mode="feature_composer",
+        class_names=class_names,
+        model_dir=model_dir
     )
 
+    # Train model
     net.fit(
-        x_train = X_train,
-        y_train = Y_train,
-        x_test = X_test,
-        y_test = Y_test,
-        epochs = epochs,
-        batch_size = batch_size, 
-        resume = False
+        x_train=X_train,
+        y_train=Y_train,
+        x_test=X_test,
+        y_test=Y_test,
+        epochs=epochs,
+        batch_size=batch_size,
+        resume=False
     )
 
-    compute_confusion_matrix(y_true = Y_test, y_pred = net.infer(X_test), framework = "tf", mode = "feature_composer")
+    # Confusion matrix
+    compute_confusion_matrix(y_true=Y_test, y_pred=net.infer(
+        X_test, use_labels = False), framework="tf", mode="feature_composer", num_classes = num_classes // 2)
 
-def infer(model_path, input_image):
+# Inference
+def infer(model_dir, model_name, input_image):
+    # Instantiate model
     net = Net(
-        pretrained_model = VGG16(
-            input_shape = (224, 224, 3),
-            include_top = True
+        pretrained_model=VGG16(
+            input_shape=(224, 224, 3),
+            include_top=True
         ),
-        num_classes = num_classes,
-        mode = "feature_composer",
-        class_names = class_names
+        num_classes=num_classes,
+        mode="feature_composer",
+        class_names=class_names,
+        model_dir=model_dir
     )
-    tf.keras.models.load_model(model_path, compile = False)
-    assert input_image.lower().endswith("png") or input_image.lower().endswith("jpg") or input_image.lower().endswith("jpeg")
-    img = preprocess_single_image(input_image, 224, 224, imagenet = True, framework = "tf")
-    return net.infer(img)
+    
+    # Load model
+    tf.keras.models.load_model(os.path.join(
+        model_dir, model_name), compile=False)
+
+    # Check if inputed file is an image
+    assert input_image.lower().endswith("png") or input_image.lower().endswith(
+        "jpg") or input_image.lower().endswith("jpeg")
+
+    # Preprocess
+    img = preprocess_single_image(
+        input_image, 224, 224, imagenet=True, framework="tf")
+
+    # Prediction
+    return net.infer(img, use_labels=True)

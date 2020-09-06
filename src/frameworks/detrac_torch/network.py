@@ -65,9 +65,10 @@ class Net(object):
         self,
         pretrained_model,
         num_classes: int,
-        cuda: bool,
         mode: str,
-        ckpt_dir: str
+        ckpt_dir: str,
+        cuda: bool = False,
+        labels: list = []
     ):
         """
         params:
@@ -84,7 +85,8 @@ class Net(object):
         self.num_classes = num_classes
         self.cuda = cuda
         self.ckpt_dir = ckpt_dir
-
+        self.labels = labels
+        
         # Check whether the mode is correct
         assert self.mode == "feature_extractor" or self.mode == "feature_composer"
 
@@ -93,7 +95,6 @@ class Net(object):
 
         # Prepare model for computation on the selected device
         self.model = set_device(self.model, self.cuda)
-
 
         # Extract the input size based on the second to last layer
         try:
@@ -199,9 +200,15 @@ class Net(object):
             "train_loss": train_loss,
             "train_loss": train_acc,
             "val_loss": val_loss,
-            "val_acc": val_acc
+            "val_acc": val_acc,
+            "labels": self.labels,
+            "num_classes": self.num_classes
         }, self.ckpt_path)
 
+    def load_model_for_inference(self, ckpt_path):
+        checkpoint = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+    
     def load(self, *args):
         """
         Load the model on GPU or CPU.
@@ -219,7 +226,7 @@ class Net(object):
             prompt = input("Load on GPU or CPU? [GPU / CPUs]\n")
 
         # Check if model exists
-        assert os.path.exists(self.ckpt_path)
+#         assert os.path.exists(self.ckpt_path)
 
         print("Loading checkpoint")
         # Load model on selected computation device
@@ -250,29 +257,13 @@ class Net(object):
         if len(loaded_args) != 0:
             return loaded_args
 
-    def save_labels_for_inference(self, labels):
-        """
-        Saves labels in the model's checkpoint.
-        Purpose: for the user to not have the possibility of accidentally deleting a log file where labels may be or for the user to have details about the label.
-        E.g.: It's much easier to see "PNEUMONIA", rather than [0.1, 0.2, 0.7]
-
-        params:
-            <list> labels: One-hot encoded labels
-        """
-
-        torch.save({
-            "labels": labels
-        }, self.ckpt_path)
-
-    def load_labels_for_inference(self):
+    def load_labels_for_inference(self, ckpt_path):
         """
         Load labels from the model's checkpoint 
         """
-
-        # Check if checkpoint exists
-        assert os.path.exists(self.ckpt_path)
+        
         checkpoint = torch.load(
-            self.ckpt_path, map_location=lambda storage, loc: storage)
+            ckpt_path, map_location=lambda storage, loc: storage)
         return checkpoint['labels']
 
     def train_step(self, train_loader):
@@ -296,8 +287,9 @@ class Net(object):
 
         # Iterate through the data
         for features, labels in train_loader:
-            # Here we permute because pretrained models in Pytorch require inputs of shape (batch_size, num_channels, width, height)
-            features = features.permute(0, 3, 1, 2)
+            if self.mode == "feature_extractor":
+                # Here we permute because pretrained models in Pytorch require inputs of shape (batch_size, num_channels, width, height)
+                features = features.permute(0, 3, 1, 2)
 
             # Load data to the desired computation device
             features = set_device(features, self.cuda)
@@ -357,7 +349,8 @@ class Net(object):
 
         # Iterate through the data
         for features, labels in validation_loader:
-            features = features.permute(0, 3, 1, 2)
+            if self.mode == "feature_extractor":
+                features = features.permute(0, 3, 1, 2)
 
             # Load data to the desired computation device
             features = set_device(features, self.cuda)
@@ -527,7 +520,7 @@ class Net(object):
                 progress_bar.set_description(
                     f"[Epoch {epoch + 1} stats]: train_loss = {train_loss:.2f} | train_acc = {train_acc:.2f}% | val_loss = {val_loss:.2f} | val_acc = {val_acc:.2f}%")
 
-    def infer(self, input_data, use_labels=False):
+    def infer(self, input_data, ckpt_path = None, use_labels=False):
         """
         The model's inference process.
 
@@ -551,8 +544,11 @@ class Net(object):
             output = self.model.cpu()(input_data).numpy()
 
             if use_labels == True:
-                labels = self.load_labels_for_inference()
-                labeled_output = {labels[output.argmax()]: output}
+                assert ckpt_path != None
+                labeled_output = {}
+                labels = self.load_labels_for_inference(ckpt_path)
+                for label, out in zip(labels, output[0]):
+                    labeled_output[label] = out
                 return labeled_output
             else:
                 return output
