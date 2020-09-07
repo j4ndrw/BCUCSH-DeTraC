@@ -32,9 +32,6 @@ class DeTraC_callback(tf.keras.callbacks.Callback):
                 save_format='tf'
             )
 
-    def on_epoch_begin(self, epoch, logs=None):
-        self.model._initial_epoch = epoch
-
 # The network
 class Net(object):
     """
@@ -57,7 +54,7 @@ class Net(object):
             <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
                                 - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
                                 - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
-            <list> class_names
+            <list> labels: List of labels
         """
 
         self.pretrained_model = pretrained_model
@@ -68,6 +65,7 @@ class Net(object):
 
         # Check if model directory exists
         assert os.path.exists(self.model_dir)
+        
         self.model_details_dir = os.path.join(model_dir, "details")
         
         # Check whether mode is correct
@@ -143,6 +141,9 @@ class Net(object):
         )
 
     def save_for_inference(self):
+        """
+        Saves the label names and number of classes for inference.
+        """
         with open(self.model_details_path, "w") as f:
             for label in self.labels:
                 f.write(f"{label}-|-")

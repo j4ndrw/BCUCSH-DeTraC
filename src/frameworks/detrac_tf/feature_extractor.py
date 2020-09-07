@@ -79,7 +79,7 @@ def train_feature_extractor(
         resume=False
     )
 
-    # Confusion matrics
+    # Confusion matrix
     compute_confusion_matrix(
         y_true=Y_test, 
         y_pred=net.infer(X_test, use_labels=False), 

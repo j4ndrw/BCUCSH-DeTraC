@@ -95,12 +95,20 @@ def infer(
     input_image: str
 ) -> dict:
     """
-    Inference method.
+    Main inference method.
 
     params:
-        <string> ckpt_dir
-        <string> ckpt_name
-        <string> input_image
+        <string> ckpt_dir: Saved model's directory
+        <string> ckpt_name: Saved model's name
+        <string> input_image: Image path
+
+    returns:
+        <dict> Dictionary containing the predictions with their levels of confidence.
+                E.g.: {
+                    COVID19_1:0.10
+                    COVID19_2:0.15
+                    ...
+                }
     """
     ckpt_path = os.path.join(ckpt_dir, ckpt_name)
     num_classes = torch.load(ckpt_path, map_location=lambda storage, loc: storage)["num_classes"]
