@@ -25,7 +25,7 @@ class DeTraC_callback(tf.keras.callbacks.Callback):
         self.filepath = filepath
 
     def on_epoch_end(self, epoch, logs=None):
-        if epoch % 10:
+        if epoch % 10 == 0 or self.num_epochs < 10:
             save_model(
                 model=self.model,
                 filepath=self.filepath,
@@ -47,7 +47,7 @@ class Net(object):
         num_classes: int,
         mode: str,
         model_dir: str,
-        class_names: list = []
+        labels: list = []
     ):
 
         """
@@ -63,12 +63,13 @@ class Net(object):
         self.pretrained_model = pretrained_model
         self.mode = mode
         self.num_classes = num_classes
-        self.class_names = class_names
+        self.labels = labels
         self.model_dir = model_dir
 
         # Check if model directory exists
         assert os.path.exists(self.model_dir)
-
+        self.model_details_dir = os.path.join(model_dir, "details")
+        
         # Check whether mode is correct
         assert self.mode == "feature_extractor" or self.mode == "feature_composer"
 
@@ -115,7 +116,7 @@ class Net(object):
         else:
             self.pretrained_layers.trainable = True
             self.classification_layer.trainable = True
-            assert len(class_names) == num_classes
+            assert len(labels) == num_classes
             self.save_name = f"DeTraC_feature_composer_{now}"
             self.optimizer = SGD(
                 learning_rate=1e-4,
@@ -132,6 +133,7 @@ class Net(object):
         # Instantiate model
         self.model = Sequential([self.pretrained_layers, self.classification_layer])
         self.model_path = os.path.join(self.model_dir, self.save_name)
+        self.model_details_path = os.path.join(self.model_details_dir, f"{self.save_name}.detrac")
 
         # Compile model
         self.model.compile(
@@ -140,6 +142,12 @@ class Net(object):
             metrics=["accuracy"]
         )
 
+    def save_for_inference(self):
+        with open(self.model_details_path, "w") as f:
+            for label in self.labels:
+                f.write(f"{label}-|-")
+            f.write(str(self.num_classes))
+        
     def fit(
         self,
         x_train: np.ndarray,
@@ -163,9 +171,12 @@ class Net(object):
             <bool> resume
         """
 
-        # If the feature composer is being used, augment the data
+        # If the feature composer is being used
         if self.mode == "feature_composer":
-            # Instantiate an image data generator
+            # Save details (number of classes and labels)
+            self.save_for_inference()
+    
+            # [DATA AUGMENTATION] Instantiate an image data generator
             datagen = tf.keras.preprocessing.image.ImageDataGenerator(
                 featurewise_std_normalization = True,
                 horizontal_flip = True
@@ -294,8 +305,10 @@ class Net(object):
         # Prediction
         output = self.model.predict(input_data)
         if use_labels == True:
-            labels = self.class_names
-            labeled_output = {labels[output.argmax()]: output}
+            labeled_output = {}
+            labels = self.labels
+            for label, out in zip(labels, output[0]):
+                labeled_output[label] = out
             return labeled_output
         else:
             return output

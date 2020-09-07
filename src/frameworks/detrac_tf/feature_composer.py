@@ -4,7 +4,7 @@ from tensorflow.keras.applications import VGG16
 
 import numpy as np
 
-from tools.preprocessing import preprocess_images
+from tools.preprocessing import preprocess_images, preprocess_single_image
 from tools.kfold import KFold_cross_validation_split
 from tools.extraction_and_metrics import extract_features, compute_confusion_matrix
 
@@ -63,7 +63,7 @@ def train_feature_composer(
         ),
         num_classes=num_classes,
         mode="feature_composer",
-        class_names=class_names,
+        labels=class_names,
         model_dir=model_dir
     )
 
@@ -89,11 +89,18 @@ def train_feature_composer(
 
 # Inference
 def infer(
+    model_details_dir: str,
     model_dir: str,
     model_name: str,
     input_image: str
 ) -> dict:
-
+    
+    with open(f"{os.path.join(model_details_dir, f'{model_name}.detrac')}", "r") as f:
+        details = f.read()
+    
+    num_classes = int(details.split("-|-")[-1])
+    labels = details.split("-|-")[:-1]
+    
     # Instantiate model
     net = Net(
         pretrained_model=VGG16(
@@ -102,8 +109,8 @@ def infer(
         ),
         num_classes=num_classes,
         mode="feature_composer",
-        class_names=class_names,
-        model_dir=model_dir
+        model_dir=model_dir,
+        labels=labels
     )
 
     # Load model

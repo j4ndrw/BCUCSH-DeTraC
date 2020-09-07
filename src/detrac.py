@@ -143,7 +143,7 @@ def inference(args):
         print("Here is a list of your models: ")
         for i, model in enumerate(os.listdir(TF_MODEL_DIR)):
             if "feature_composer" in model:
-                print(f"{i + 1}) {model}")
+                print(f"{(i + 1) // 2}) {model}")
                 model_list.append(model)
 
         # Prompt user to choose a model
@@ -153,9 +153,13 @@ def inference(args):
 
         # Predict
         prediction = detrac_tf.feature_composer.infer(
-            TF_MODEL_DIR, model_list[model_choice - 1], path_to_file)
-        print(f"Prediction: {list(prediction.keys())[0]}")
-        print(f"Confidence: {list(prediction.values())}")
+            model_details_dir=TF_MODEL_DETAILS_DIR,
+            model_dir=TF_MODEL_DIR,
+            model_name=model_list[model_choice - 1], 
+            input_image=path_to_file
+        )
+        print(f"Prediction: {list(prediction.keys())[0].split('_')[0]}")
+        print(f"Confidence: \n{prediction}")
 
     # If user chose "Pytorch" for the framework option
     elif args.framework[0].lower() == "torch" or args.framework[0].lower() == "pytorch":
@@ -164,9 +168,11 @@ def inference(args):
         print("Here is a list of your models: ")
         for i, model in enumerate(os.listdir(TORCH_CKPT_DIR)):
             if "feature_composer" in model:
-                print(f"{i + 1}) {model}")
+                print(f"{(i + 1) // 2}) {model}")
                 model_list.append(model)
 
+        assert len(model_list) != 0
+                
         # Prompt user to choose a model
         model_choice = -1
         while model_choice > len(model_list) or model_choice < 1:
@@ -204,7 +210,7 @@ def main():
         init_folders(INITIAL_DATASET_PATH),
         init_folders(EXTRACTED_FEATURES_PATH),
         init_folders(COMPOSED_DATASET_PATH),
-        init_folders(GENERAL_MODELS_PATH)
+        init_folders(GENERAL_MODELS_PATH),
         init_folders(TF_MODEL_DETAILS_DIR)
     ]
 

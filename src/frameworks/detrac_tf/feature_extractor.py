@@ -64,7 +64,7 @@ def train_feature_extractor(
         ),
         num_classes=num_classes,
         mode="feature_extractor",
-        class_names=class_names,
+        labels=class_names,
         model_dir=model_dir
     )
 
