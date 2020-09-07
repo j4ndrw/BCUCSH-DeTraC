@@ -15,6 +15,8 @@ GENERAL_MODELS_PATH = "../models"
 TF_MODEL_DIR = os.path.join(GENERAL_MODELS_PATH, "tf")
 TORCH_CKPT_DIR = os.path.join(GENERAL_MODELS_PATH, "torch")
 
+TF_MODEL_DETAILS_DIR = os.path.join(GENERAL_MODELS_PATH, TF_MODEL_DIR, "details")
+
 # TODO: Document and proofread
 # TODO: Fix / implement save and resume mechanic OR get rid of it (not ideal)
 # TODO: Implement different log mechanic for number of classes and labels (TF)
@@ -203,6 +205,7 @@ def main():
         init_folders(EXTRACTED_FEATURES_PATH),
         init_folders(COMPOSED_DATASET_PATH),
         init_folders(GENERAL_MODELS_PATH)
+        init_folders(TF_MODEL_DETAILS_DIR)
     ]
 
     if all(fresh_directories) == True:
