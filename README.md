@@ -1,10 +1,10 @@
 # [DeTraC](https://arxiv.org/pdf/2003.13815.pdf)
 
-## Details
+<!-- ## Details
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean feugiat, turpis vel porttitor scelerisque, lorem massa lacinia turpis, a eleifend nisi leo vitae mauris. Suspendisse sit amet ullamcorper est, et sollicitudin eros. Duis sollicitudin lacus rutrum dui fermentum, vehicula convallis odio aliquam. Maecenas a ante risus. Etiam vitae est est. Nunc gravida at arcu quis ultricies. Etiam blandit velit id ipsum cursus pharetra. Curabitur elit justo, maximus at accumsan id, varius elementum est. Proin nec venenatis mi, et pellentesque ex.
 
-Sed molestie arcu eu est fermentum tincidunt. Morbi suscipit urna nulla, ut blandit massa eleifend id. Suspendisse non nisi vitae massa vestibulum tincidunt. Donec venenatis eget elit sit amet luctus. Donec volutpat dolor mauris, eu viverra velit eleifend at. Duis efficitur odio at egestas feugiat. Maecenas semper mauris erat, vitae pulvinar arcu laoreet nec. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur ultrices feugiat nisi at tincidunt. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. 
+Sed molestie arcu eu est fermentum tincidunt. Morbi suscipit urna nulla, ut blandit massa eleifend id. Suspendisse non nisi vitae massa vestibulum tincidunt. Donec venenatis eget elit sit amet luctus. Donec volutpat dolor mauris, eu viverra velit eleifend at. Duis efficitur odio at egestas feugiat. Maecenas semper mauris erat, vitae pulvinar arcu laoreet nec. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur ultrices feugiat nisi at tincidunt. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.  -->
 
 ## Usage
 
@@ -76,7 +76,10 @@ Afterwards, we normalize the training and validation feature sets.
 
 Then, the feature extractors training process starts
 
-It is worth mentioning that <b>all pretrained layers' weights are frozen</b> and <b>only the custom classification layers' weights are active</b>.
+It is worth mentioning that there are 3 possible modes of training:
+- Shallow tuning | All pretrained layers have their weights frozen and the custom classification layer has its weights active
+- Deep tuning | All layers have their weights active
+- Fine tuning | A certain number of low-level layers have their weights frozen and the rest have their weights active
 
 Here's a sample output:
 ```
@@ -90,6 +93,17 @@ Use CUDA for GPU computation? [Y / N]: y
 Loading images from directory COVID19: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 576/576 [01:11<00:00,  8.07it/s]
 Loading images from directory NORMAL: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 317/317 [00:35<00:00,  8.92it/s]
 Loading images from directory PNEUMONIA: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 2358/2358 [02:56<00:00, 13.37it/s]
+            
+            
+            Choose a mode in which you wish to train:
+            1) Shallow-tuning (Fast, but inaccurate)
+            2) Deep-tuning (Slow and requires a lot of data, but accurate)
+            3) Fine-tuning
+            
+> 3
+Pretrained model has 37 layers.
+> How many layers to train?: 25  
+Freezing 12 layers and activating 25.
 [Epoch 1 stats]: train_loss = 0.78 | train_acc = 72.05% | val_loss = 0.74 | val_acc = 70.54%: 100%|███████████████████████████████████████████████| 1/1 [00:58<00:00, 58.58s/it]
 [[0.         0.         0.18190212]
  [0.         0.         0.11265005]
