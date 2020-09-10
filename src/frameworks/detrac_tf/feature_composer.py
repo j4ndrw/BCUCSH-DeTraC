@@ -20,6 +20,7 @@ def train_feature_composer(
     batch_size: int,
     num_classes: int,
     folds: int,
+    lr: float,
     model_dir: str
 ):
     """
@@ -31,6 +32,7 @@ def train_feature_composer(
      <int> batch_size
      <int> num_classes
      <int> folds: Number of folds for KFold cross validation 
+     <float> lr: Learning rate
      <string> model_dir: Model's location
     """
 
@@ -62,6 +64,7 @@ def train_feature_composer(
             include_top=True
         ),
         num_classes=num_classes,
+        lr=lr,
         mode="feature_composer",
         labels=class_names,
         model_dir=model_dir

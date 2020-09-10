@@ -1,0 +1,7 @@
+tqdm==4.43.0
+torchvision==0.7.0+cu101
+tensorflow==2.2.0rc4
+numpy==1.18.1
+matplotlib==3.2.1
+opencv_python==4.2.0.34
+scikit_learn==0.23.2

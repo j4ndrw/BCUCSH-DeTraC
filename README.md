@@ -1,14 +1,8 @@
 # [DeTraC](https://arxiv.org/pdf/2003.13815.pdf)
 
-<!-- ## Details
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean feugiat, turpis vel porttitor scelerisque, lorem massa lacinia turpis, a eleifend nisi leo vitae mauris. Suspendisse sit amet ullamcorper est, et sollicitudin eros. Duis sollicitudin lacus rutrum dui fermentum, vehicula convallis odio aliquam. Maecenas a ante risus. Etiam vitae est est. Nunc gravida at arcu quis ultricies. Etiam blandit velit id ipsum cursus pharetra. Curabitur elit justo, maximus at accumsan id, varius elementum est. Proin nec venenatis mi, et pellentesque ex.
-
-Sed molestie arcu eu est fermentum tincidunt. Morbi suscipit urna nulla, ut blandit massa eleifend id. Suspendisse non nisi vitae massa vestibulum tincidunt. Donec venenatis eget elit sit amet luctus. Donec volutpat dolor mauris, eu viverra velit eleifend at. Duis efficitur odio at egestas feugiat. Maecenas semper mauris erat, vitae pulvinar arcu laoreet nec. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur ultrices feugiat nisi at tincidunt. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.  -->
-
 ## Usage
 
-Before running the script, make sure that you are located in the ```src``` directory inside the ```DeTraC``` folder.
+Before running the script, run ```pip install -r requirements.txt``` so that you can install all the necessary dependencies. Also, make sure that you are located in the ```src``` directory inside the ```DeTraC``` folder.
 
 A key aspect to keep in mind is that this script can be used with either a TensorFlow backend, or a PyTorch backend. Regardless of the chosen framework, the results should be the same. 
 
@@ -26,7 +20,7 @@ python detrac.py -f torch
 This script consists of two elements:
 - Training:
     ```bash
-    python detrac.py -f <FRAMEWORK> --train --epochs <NUMBER_OF_EPOCHS> --num_classes <NUMBER_OF_CLASSES> --batch_size <BATCH_SIZE> --folds <NUMBER_OF_FOLDS>
+    python detrac.py -f <FRAMEWORK> --train --epochs <NUMBER_OF_EPOCHS> --num_classes <NUMBER_OF_CLASSES> --batch_size <BATCH_SIZE> --folds <NUMBER_OF_FOLDS> --k <NUMBER_OF_CLUSTER(K-Means)> --lr <FEATURE_EXTRACTOR_LR> B <FEATURE_COMPOSER_LR>
     ```
 
 - Inference
@@ -115,7 +109,7 @@ SPECIFICITY = 0.6666666666666666
 
 #### <b>Feature extraction process</b>
 
-After training is done, the feature extractor will use the same images from the initial dataset and it will predict 4096x4096 features from them (inference is done without last layer of classification).
+After training is done, the feature extractor will use the same images from the initial dataset and it will predict ```Nx4096``` features from them (inference is done without last layer of classification), where ```N = Number of images in a folder```.
 
 Sample output:
 ```

@@ -41,7 +41,10 @@ def training(args):
     batch_size = args.batch_size[0]
     feature_extractor_num_classes = args.num_classes[0]
     feature_composer_num_classes = 2 * feature_extractor_num_classes
-    k = args.folds[0]
+    folds = args.folds[0]
+    k = args.k[0]
+    feature_extractor_lr = args.lr[0]
+    feature_composer_lr = args.lr[1]
 
     # If user chose "Tensorflow" for the framework option
     if args.framework[0].lower() == "tf" or args.framework[0].lower() == "tensorflow":
@@ -52,7 +55,8 @@ def training(args):
             epochs=num_epochs,
             batch_size=batch_size,
             num_classes=feature_extractor_num_classes,
-            folds=k,
+            folds=folds,
+            lr=feature_extractor_lr,
             model_dir=TF_MODEL_DIR
         )
 
@@ -60,7 +64,8 @@ def training(args):
         construct_composed_dataset.execute_decomposition(
             initial_dataset_path=INITIAL_DATASET_PATH,
             composed_dataset_path=COMPOSED_DATASET_PATH,
-            features_path=EXTRACTED_FEATURES_PATH
+            features_path=EXTRACTED_FEATURES_PATH,
+            k=k
         )
 
         # Train feature composer on composed dataset
@@ -69,7 +74,8 @@ def training(args):
             epochs=num_epochs,
             batch_size=batch_size,
             num_classes=feature_composer_num_classes,
-            folds=k,
+            folds=folds,
+            lr=feature_composer_lr,
             model_dir=TF_MODEL_DIR
         )
 
@@ -90,7 +96,8 @@ def training(args):
             epochs=num_epochs,
             batch_size=batch_size,
             num_classes=feature_extractor_num_classes,
-            folds=k,
+            folds=folds,
+            lr=feature_extractor_lr,
             cuda=use_cuda,
             ckpt_dir=TORCH_CKPT_DIR
         )
@@ -99,7 +106,8 @@ def training(args):
         construct_composed_dataset.execute_decomposition(
             initial_dataset_path=INITIAL_DATASET_PATH,
             composed_dataset_path=COMPOSED_DATASET_PATH,
-            features_path=EXTRACTED_FEATURES_PATH
+            features_path=EXTRACTED_FEATURES_PATH,
+            k=k
         )
 
         # Train feature composer on composed dataset
@@ -108,7 +116,8 @@ def training(args):
             epochs=num_epochs,
             batch_size=batch_size,
             num_classes=feature_composer_num_classes,
-            folds=k,
+            folds=folds,
+            lr=feature_composer_lr,
             cuda=use_cuda,
             ckpt_dir=TORCH_CKPT_DIR
         )

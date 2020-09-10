@@ -21,6 +21,7 @@ def train_feature_extractor(
     batch_size: int,
     num_classes: int,
     folds: int,
+    lr:float,
     cuda: bool,
     ckpt_dir: str
 ):
@@ -34,6 +35,7 @@ def train_feature_extractor(
      <int> batch_size
      <int> num_classes
      <int> folds: Number of folds for KFold cross validation 
+     <float> lr: Learning rate
      <bool> cuda: Whether to use GPU or not
      <string> ckpt_dir: Model's location
     """
@@ -62,6 +64,7 @@ def train_feature_extractor(
     net = Net(
         models.vgg16(pretrained=True),
         num_classes=num_classes,
+        lr=lr
         cuda=cuda,
         mode="feature_extractor",
         ckpt_dir=ckpt_dir,

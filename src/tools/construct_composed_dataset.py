@@ -13,7 +13,8 @@ def decompose(
     path_to_images: str, 
     path_to_decomposed_images_1: str, 
     path_to_decomposed_images_2: str, 
-    class_name: str
+    class_name: str,
+    k: int
 ):
     """
     Decomposition of extracted features using KMeans clustering.
@@ -28,13 +29,14 @@ def decompose(
         <string> path_to_images
         <string> path_to_decomposed_images_1
         <string> path_to_decomposed_images_2
+        <int> k: Number of clusters
     """
 
     # Load features
     features = np.load(path_to_features)
 
     # Cluster index
-    idx = KMeans(n_clusters=2, random_state=0).fit(features)
+    idx = KMeans(n_clusters=k, random_state=0).fit(features)
     idx = idx.predict(features)
 
     # Images list
@@ -61,7 +63,8 @@ def decompose(
 def execute_decomposition(
     initial_dataset_path: str, 
     composed_dataset_path: str, 
-    features_path: str
+    features_path: str,
+    k:int
 ):
     """
     Decomposes features in a separate dataset
@@ -70,6 +73,7 @@ def execute_decomposition(
         <string> initial_dataset_path
         <string> composed_dataset_path
         <string> features_path
+        <int> k: Number of clusters
     """
 
     # Check if folders exist
@@ -110,5 +114,6 @@ def execute_decomposition(
             path_to_images=os.path.join(initial_dataset_path, class_name),
             path_to_decomposed_images_1=os.path.join(composed_dataset_path, f"{class_name}_1/"),
             path_to_decomposed_images_2=os.path.join(composed_dataset_path, f"{class_name}_2/"),
-            class_name=class_name
+            class_name=class_name,
+            k=k
         )

@@ -62,32 +62,34 @@ class augmented_data(Dataset):
 class Net(object):
     """
     The DeTraC model.
+
+    params:
+        <inherits nn.Module> pretrained_model: VGG, AlexNet or whatever other ImageNet pretrained model is chosen
+        <int> num_classes
+        <float> lr: Learning rate
+        <bool> cuda: Choice of computation device (Whether to use GPU or not)
+        <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
+                            - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
+                            - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
+        <string> ckpt_dir
+        <list> labels: The text labels to be saved inside the model.
     """
 
     def __init__(
         self,
         pretrained_model,
         num_classes: int,
+        lr: float = None,
         mode: str,
         ckpt_dir: str,
         cuda: bool = False,
         labels: list = []
     ):
-        """
-        params:
-            <inherits nn.Module> pretrained_model: VGG, AlexNet or whatever other ImageNet pretrained model is chosen
-            <int> num_classes
-            <bool> cuda: Choice of computation device (Whether to use GPU or not)
-            <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
-                                - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
-                                - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
-            <string> ckpt_dir
-            <list> labels: The text labels to be saved inside the model.
-        """
 
         self.mode = mode
         self.model = pretrained_model
         self.num_classes = num_classes
+        self.lr = lr
         self.cuda = cuda
         self.ckpt_dir = ckpt_dir
         self.labels = labels
@@ -214,7 +216,7 @@ class Net(object):
 
             self.optimizer = optim.SGD(
                 params=self.model.parameters(),
-                lr=1e-4,
+                lr=self.lr,
                 momentum=0.9,
                 nesterov=False,
                 weight_decay=1e-3
@@ -234,7 +236,7 @@ class Net(object):
 
             self.optimizer = optim.SGD(
                 params=self.model.parameters(),
-                lr=1e-4,
+                lr=self.lr,
                 momentum=0.95,
                 nesterov=False,
                 weight_decay=1e-4

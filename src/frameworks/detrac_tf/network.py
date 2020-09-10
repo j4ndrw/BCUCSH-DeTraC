@@ -36,31 +36,32 @@ class DeTraC_callback(tf.keras.callbacks.Callback):
 class Net(object):
     """
     The DeTraC model.
+
+    params:
+            <Sequential> pretrained_model: VGG, AlexNet or whatever other ImageNet pretrained model is chosen
+            <int> num_classes
+            <float> lr: Learning rate
+            <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
+                                - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
+                                - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
+            <string> model_dir
+            <list> labels: List of labels
     """
 
     def __init__(
         self,
         pretrained_model: Model,
         num_classes: int,
+        lr: float = None
         mode: str,
         model_dir: str,
         labels: list = []
     ):
 
-        """
-        params:
-            <Sequential> pretrained_model: VGG, AlexNet or whatever other ImageNet pretrained model is chosen
-            <int> num_classes
-            <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
-                                - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
-                                - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
-            <string> model_dir
-            <list> labels: List of labels
-        """
-
         self.pretrained_model = pretrained_model
         self.mode = mode
         self.num_classes = num_classes
+        self.lr = lr
         self.labels = labels
         self.model_dir = model_dir
 
@@ -162,7 +163,7 @@ class Net(object):
                 self.classification_layer.trainable = True
 
             self.optimizer = SGD(
-                learning_rate=1e-4,
+                learning_rate=self.lr,
                 momentum=0.9,
                 nesterov=False,
                 decay=1e-3
@@ -180,7 +181,7 @@ class Net(object):
             assert len(labels) == num_classes
             self.save_name = f"DeTraC_feature_composer_{now}"
             self.optimizer = SGD(
-                learning_rate=1e-4,
+                learning_rate=self.lr,
                 momentum=0.95,
                 nesterov=False,
                 decay=1e-4

@@ -127,6 +127,6 @@ def compute_confusion_matrix(
 
     # Compute accuracy, sensitivity and specificity
     acc, sn, sp = multiclass_confusion_matrix(cmat, num_classes)
-    output = f"ACCURACY = {acc}\nSENSITIVITY = {sn}\nSPECIFICITY = {sp}"
+    output = f"ACCURACY = {acc}"
     print(output)
 

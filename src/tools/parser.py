@@ -67,6 +67,27 @@ parser.add_argument(
     help="Number of classes to train classifier on"
 )
 
+# Learning rate conditional option
+parser.add_argument(
+    "--lr",
+    required="--train" in sys.argv,
+    metavar="N",
+    type=float,
+    nargs=2,
+    help="""Learning for feature extractor and feature composer.
+    --lr [A B], where A is the learning rate for the feature extractor and B is the learning rate for the feature composer"""
+)
+
+# Learning rate conditional option
+parser.add_argument(
+    "--k",
+    required="--train" in sys.argv,
+    metavar="K",
+    type=int,
+    nargs=1,
+    help="K-Means clustering"
+)
+
 # Inference option
 parser.add_argument(
     "--infer",

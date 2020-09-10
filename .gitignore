@@ -1,5 +1,6 @@
 .vscode
 
+data/initial_dataset
 data/extracted_features
 data/composed_dataset
 
