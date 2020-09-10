@@ -131,13 +131,13 @@ class Net(object):
             
             # Total number of pretrained layers 
             # (except last classification layer)
-            self.num_pretrained_layers = len(list(model.modules())) - len(list(model.classifier))
+            self.num_pretrained_layers = len(list(self.model.modules())) - len(list(self.model.classifier))
         except:
             self.model.fc = self.classification_layer
             
             # Total number of pretrained layers 
             # (except last fully connected layer)
-            self.num_pretrained_layers = len(list(model.modules())) - len(list(model.fc))
+            self.num_pretrained_layers = len(list(self.model.modules())) - len(list(self.model.fc))
 
         # Training mode
         # Number of layers to activate and freeze
@@ -182,7 +182,7 @@ class Net(object):
         if self.mode == "feature_extractor":
             self.save_name = f"DeTraC_feature_extractor_{now}.pth"
 
-            if training_mode == 1:
+            if self.training_mode == 1:
                 print("Freezing all pretrained layers. Activating only classification layer")
                 for param in self.model.parameters():
                     param.requires_grad = False
@@ -193,7 +193,7 @@ class Net(object):
                     for param in self.model.fc.parameters():
                         param.requires_grad = True
 
-            elif training_mode == 2:
+            elif self.training_mode == 2:
                 print("Activating all layers")
                 for param in self.model.parameters():
                     param.requires_grad = True
