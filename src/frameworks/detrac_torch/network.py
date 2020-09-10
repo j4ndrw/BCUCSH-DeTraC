@@ -81,6 +81,7 @@ class Net(object):
             <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
                                 - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
                                 - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
+            <string> ckpt_dir
             <list> labels: The text labels to be saved inside the model.
         """
 
@@ -127,8 +128,51 @@ class Net(object):
         # Replace the pretrained classification layer with the custom classification layer
         try:
             self.model.classifier[-1] = self.classification_layer
+            
+            # Total number of pretrained layers 
+            # (except last classification layer)
+            self.num_pretrained_layers = len(list(model.modules())) - len(list(model.classifier))
         except:
             self.model.fc = self.classification_layer
+            
+            # Total number of pretrained layers 
+            # (except last fully connected layer)
+            self.num_pretrained_layers = len(list(model.modules())) - len(list(model.fc))
+
+        # Training mode
+        # Number of layers to activate and freeze
+        self.hm_layers_to_activate, self.hm_layers_to_freeze = 0, 0
+
+        # The choice will only be given if it is 
+        # the feature extractor that it is training.
+        if self.mode == "feature_extractor":
+            print("""
+            Choose a mode in which you wish to train:\n
+            1) Shallow-tuning (Fast, but inaccurate)\n
+            2) Deep-tuning (Slow and requires a lot of data, but accurate)\n
+            3) Fine-tuning
+            """)
+
+            # User choice
+            self.training_mode = int(input("> "))
+            while self.training_mode < 1 or self.training_mode > 3:
+                print("Choose a mode in which you wish to train:\n1) Shallow-tuning\n2) Deep-tuning\n3) Fine-tuning")
+            
+            # If the user chose the fine-tuning method, 
+            # prepare the layers for freezing and training respectively
+            if self.training_mode == 3:
+                print(f"Pretrained model has {self.num_pretrained_layers} layers.")
+                
+                # How many layers to activate 
+                # (prepare their weights for gradient descent)
+                self.hm_layers_to_activate = int(input("> How many layers to train?: "))
+                while self.hm_layers_to_activate < 0 and self.hm_layers_to_activate > self.num_pretrained_layers:
+                    self.hm_layers_to_activate = int(input("> How many layers to train?: "))
+                # How many layers to freeze
+                # (how many to omit when executing gradient descent)
+                self.hm_layers_to_freeze = self.num_pretrained_layers - self.hm_layers_to_activate
+        else:
+            self.hm_layers_to_freeze = self.num_pretrained_layers
 
         # Set the save path, freeze or unfreeze the gradients based on the mode and define appropriate optimizers and schedulers.
         # Feature extractor => Freeze all gradients except the custom classification layer
@@ -138,15 +182,35 @@ class Net(object):
         if self.mode == "feature_extractor":
             self.save_name = f"DeTraC_feature_extractor_{now}.pth"
 
-            for param in self.model.parameters():
-                param.requires_grad = False
+            if training_mode == 1:
+                print("Freezing all pretrained layers. Activating only classification layer")
+                for param in self.model.parameters():
+                    param.requires_grad = False
+                try:
+                    for param in self.model.classifier[-1].parameters():
+                        param.requires_grad = True
+                except:
+                    for param in self.model.fc.parameters():
+                        param.requires_grad = True
 
-            try:
-                for param in self.model.classifier[-1].parameters():
+            elif training_mode == 2:
+                print("Activating all layers")
+                for param in self.model.parameters():
                     param.requires_grad = True
-            except:
-                for param in self.model.fc.parameters():
-                    param.requires_grad = True
+
+            else:
+                print(f"Freezing {self.hm_layers_to_freeze} layers and activating {self.hm_layers_to_activate}.")
+                for i, param in enumerate(self.model.parameters()):
+                    if i <= self.hm_layers_to_freeze:
+                        param.requires_grad = False
+                    else:
+                        param.requires_grad = True
+                try:
+                    for param in self.model.classifier[-1].parameters():
+                        param.requires_grad = True
+                except:
+                    for param in self.model.fc.parameters():
+                        param.requires_grad = True                
 
             self.optimizer = optim.SGD(
                 params=self.model.parameters(),

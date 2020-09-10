@@ -54,6 +54,7 @@ class Net(object):
             <string> mode: The DeTraC model contains 2 modes which are used depending on the case:
                                 - feature_extractor: used in the first phase of computation, where the pretrained model is used to extract the main features from the dataset
                                 - feature_composer: used in the last phase of computation, where the model is now training on the composed images, using the extracted features and clustering them.
+            <string> model_dir
             <list> labels: List of labels
         """
 
@@ -82,8 +83,52 @@ class Net(object):
         self.custom_biases = lambda shape, dtype = None: \
             tf.Variable(lambda: tf.random.normal(shape) * 0.0001 + 1)
 
+        # Training mode choice
+        # Number of layers to activate and freeze
+        self.hm_layers_to_activate, self.hm_layers_to_freeze = 0, 0
+
+        # Total number of pretrained layers 
+        # (except last classification layer)
+        self.num_pretrained_layers = len(list(pretrained_model.layers[:-2]))
+
+        # The choice will only be given if it is 
+        # the feature extractor that it is training.
+        if self.mode == "feature_extractor":
+            print("""
+            Choose a mode in which you wish to train:\n
+            1) Shallow-tuning (Fast, but inaccurate)\n
+            2) Deep-tuning (Slow and requires a lot of data, but accurate)\n
+            3) Fine-tuning
+            """)
+            
+            # User choice
+            self.training_mode = int(input("> "))
+            while self.training_mode < 1 or self.training_mode > 3:
+                print("Choose a mode in which you wish to train:\n1) Shallow-tuning\n2) Deep-tuning\n3) Fine-tuning")
+
+            # If the user chose the fine-tuning method, 
+            # prepare the layers for freezing and training respectively
+            if self.training_mode == 3:
+                print(f"Pretrained model has {self.num_pretrained_layers} layers.")
+
+                # How many layers to activate 
+                # (prepare their weights for gradient descent)
+                self.hm_layers_to_activate = int(input("> How many layers to train?: "))
+                while self.hm_layers_to_activate < 0 and self.hm_layers_to_activate > self.num_pretrained_layers:
+                    self.hm_layers_to_activate = int(input("> How many layers to train?: "))
+
+                # How many layers to freeze
+                # (how many to omit when executing gradient descent)
+                self.hm_layers_to_freeze = self.num_pretrained_layers - self.hm_layers_to_activate
+        else:
+            self.hm_layers_to_freeze = self.num_pretrained_layers
+
         # Pretrained layers
-        self.pretrained_layers = Sequential(pretrained_model.layers[:-2])
+        self.pretrained_layers = self.pretrained_model.layers[:-2]
+
+        # Set of pretrained layers
+        self.pretrained_layers_to_freeze = Sequential(self.pretrained_layers[:self.hm_layers_to_freeze])
+        self.pretrained_layers_to_activate = Sequential(self.pretrained_layers[self.pretrained_layers_to_freeze:self.pretrained_layers_to_activate])
         
         # Custom classification layer
         self.classification_layer = Dense(
@@ -97,9 +142,23 @@ class Net(object):
         # Feature extractor => Freeze all gradients except the custom classification layer
         # Feature composer => Unfreeze / Activate all gradients
         if self.mode == "feature_extractor":
-            self.pretrained_layers.trainable = False
-            self.classification_layer.trainable = True
             self.save_name = f"DeTraC_feature_extractor_{now}"
+            if training_mode == 1:
+                print("Freezing all pretrained layers. Activating only classification layer")
+                self.pretrained_layers_to_freeze.trainable = False
+                self.pretrained_layers_to_activate = False
+                self.classification_layer.trainable = True
+            elif training_mode == 2:
+                print("Activating all layers")
+                self.pretrained_layers_to_freeze.trainable = True
+                self.pretrained_layers_to_activate.trainable = True
+                self.classification_layer.trainable = True
+            else:
+                print(f"Freezing {self.hm_layers_to_freeze} layers and activating {self.hm_layers_to_activate}.")
+                self.pretrained_layers_to_freeze.trainable = False
+                self.pretrained_layers_to_activate = True
+                self.classification_layer = True
+
             self.optimizer = SGD(
                 learning_rate=1e-4,
                 momentum=0.9,
@@ -112,8 +171,10 @@ class Net(object):
                 patience=3
             )
         else:
-            self.pretrained_layers.trainable = True
+            self.pretrained_layers_to_freeze.trainable = True
+            self.pretrained_layers_to_activate.trainable = True
             self.classification_layer.trainable = True
+
             assert len(labels) == num_classes
             self.save_name = f"DeTraC_feature_composer_{now}"
             self.optimizer = SGD(
@@ -129,7 +190,7 @@ class Net(object):
             )
             
         # Instantiate model
-        self.model = Sequential([self.pretrained_layers, self.classification_layer])
+        self.model = Sequential([self.pretrained_layers_to_freeze, self.pretrained_layers_to_activate, self.classification_layer])
         self.model_path = os.path.join(self.model_dir, self.save_name)
         self.model_details_path = os.path.join(self.model_details_dir, f"{self.save_name}.detrac")
 
