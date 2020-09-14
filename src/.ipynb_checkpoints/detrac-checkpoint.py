@@ -2,6 +2,7 @@ from tools.parser import args
 from tools import construct_composed_dataset
 
 from frameworks import detrac_tf, detrac_torch
+import numpy as np
 
 import os
 
@@ -41,7 +42,10 @@ def training(args):
     batch_size = args.batch_size[0]
     feature_extractor_num_classes = args.num_classes[0]
     feature_composer_num_classes = 2 * feature_extractor_num_classes
-    k = args.folds[0]
+    folds = args.folds[0]
+    k = args.k[0]
+    feature_extractor_lr = args.lr[0]
+    feature_composer_lr = args.lr[1]
 
     # If user chose "Tensorflow" for the framework option
     if args.framework[0].lower() == "tf" or args.framework[0].lower() == "tensorflow":
@@ -52,7 +56,8 @@ def training(args):
             epochs=num_epochs,
             batch_size=batch_size,
             num_classes=feature_extractor_num_classes,
-            folds=k,
+            folds=folds,
+            lr=feature_extractor_lr,
             model_dir=TF_MODEL_DIR
         )
 
@@ -60,7 +65,8 @@ def training(args):
         construct_composed_dataset.execute_decomposition(
             initial_dataset_path=INITIAL_DATASET_PATH,
             composed_dataset_path=COMPOSED_DATASET_PATH,
-            features_path=EXTRACTED_FEATURES_PATH
+            features_path=EXTRACTED_FEATURES_PATH,
+            k=k
         )
 
         # Train feature composer on composed dataset
@@ -69,7 +75,8 @@ def training(args):
             epochs=num_epochs,
             batch_size=batch_size,
             num_classes=feature_composer_num_classes,
-            folds=k,
+            folds=folds,
+            lr=feature_composer_lr,
             model_dir=TF_MODEL_DIR
         )
 
@@ -90,7 +97,8 @@ def training(args):
             epochs=num_epochs,
             batch_size=batch_size,
             num_classes=feature_extractor_num_classes,
-            folds=k,
+            folds=folds,
+            lr=feature_extractor_lr,
             cuda=use_cuda,
             ckpt_dir=TORCH_CKPT_DIR
         )
@@ -99,7 +107,8 @@ def training(args):
         construct_composed_dataset.execute_decomposition(
             initial_dataset_path=INITIAL_DATASET_PATH,
             composed_dataset_path=COMPOSED_DATASET_PATH,
-            features_path=EXTRACTED_FEATURES_PATH
+            features_path=EXTRACTED_FEATURES_PATH,
+            k=k
         )
 
         # Train feature composer on composed dataset
@@ -108,7 +117,8 @@ def training(args):
             epochs=num_epochs,
             batch_size=batch_size,
             num_classes=feature_composer_num_classes,
-            folds=k,
+            folds=folds,
+            lr=feature_composer_lr,
             cuda=use_cuda,
             ckpt_dir=TORCH_CKPT_DIR
         )
@@ -143,7 +153,7 @@ def inference(args):
         print("Here is a list of your models: ")
         for i, model in enumerate(os.listdir(TF_MODEL_DIR)):
             if "feature_composer" in model:
-                print(f"{(i + 1) // 2}) {model}")
+                print(f"{(i + 1) // 2 + 1}) {model}")
                 model_list.append(model)
 
         # Prompt user to choose a model
@@ -168,7 +178,7 @@ def inference(args):
         print("Here is a list of your models: ")
         for i, model in enumerate(os.listdir(TORCH_CKPT_DIR)):
             if "feature_composer" in model:
-                print(f"{(i + 1) // 2}) {model}")
+                print(f"{(i + 1) // 2 + 1}) {model}")
                 model_list.append(model)
 
         assert len(model_list) != 0
@@ -184,7 +194,7 @@ def inference(args):
             ckpt_name=model_list[model_choice - 1], 
             input_image=path_to_file)
 
-        print(f"Prediction: {list(prediction.keys())[0].split('_')[0]}")
+        print(f"Prediction: {list(prediction.keys())[np.array(list(prediction.values())).argmax()].split('_')[0]}")
         print(f"Confidence: \n{prediction}")
 
 # Function used to initialize repo with the necessary folders.

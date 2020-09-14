@@ -52,10 +52,10 @@ class Net(object):
         self,
         pretrained_model: Model,
         num_classes: int,
-        lr: float = None
         mode: str,
         model_dir: str,
-        labels: list = []
+        labels: list = [],
+        lr: float = 0.0,
     ):
 
         self.pretrained_model = pretrained_model

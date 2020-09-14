@@ -64,7 +64,7 @@ def train_feature_extractor(
     net = Net(
         models.vgg16(pretrained=True),
         num_classes=num_classes,
-        lr=lr
+        lr=lr,
         cuda=cuda,
         mode="feature_extractor",
         ckpt_dir=ckpt_dir,

@@ -79,11 +79,11 @@ class Net(object):
         self,
         pretrained_model,
         num_classes: int,
-        lr: float = None,
         mode: str,
         ckpt_dir: str,
         cuda: bool = False,
-        labels: list = []
+        labels: list = [],
+        lr: float = 0.0
     ):
 
         self.mode = mode
