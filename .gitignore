@@ -1,12 +1,11 @@
 .vscode
+.ipynb_checkpoints
 
-data/initial_dataset
-data/extracted_features
-data/composed_dataset
+data
 
-models/tf
-models/torch
+models
 
+src/.ipynb_checkpoints
 src/__pycache__
 
 src/frameworks/detrac_tf/__pycache__
