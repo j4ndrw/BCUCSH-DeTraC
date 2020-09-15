@@ -1,9 +1,0 @@
-tqdm==4.43.0
-torch==1.4.0
-torchvision==0.5.0
-tensorflow==2.2.0
-tensorflow-gpu==2.2.0
-numpy==1.18.1
-matplotlib==3.2.2
-opencv_python==4.3.0.38
-scikit_learn==0.23.2
