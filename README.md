@@ -178,7 +178,9 @@ Confidence:
 ```
 
 
-Citation
+### <b>Citation</b>
+
+
 If you used DeTraC and found it useful, please cite the following papers:
 
 • Abbas A, Abdelsamea MM, Gaber MM. DeTraC: Transfer Learning of Class Decomposed Medical Images in Convolutional Neural Networks. IEEE Access 2020. (https://ieeexplore.ieee.org/document/9075155?source=authoralert)
