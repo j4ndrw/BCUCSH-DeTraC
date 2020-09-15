@@ -176,3 +176,11 @@ Prediction: COVID19
 Confidence: 
 {'COVID19_1': 0.12374887, 'COVID19_2': 0.16667016, 'NORMAL_1': 0.093206584, 'NORMAL_2': 0.09856959, 'PNEUMONIA_1': 0.2301002, 'PNEUMONIA_2': 0.28770462}
 ```
+
+
+Citation
+If you used DeTraC and found it useful, please cite the following papers:
+
+• Abbas A, Abdelsamea MM, Gaber MM. DeTraC: Transfer Learning of Class Decomposed Medical Images in Convolutional Neural Networks. IEEE Access 2020. (https://ieeexplore.ieee.org/document/9075155?source=authoralert)
+
+• Abbas A, Abdelsamea MM, Gaber MM. Classification of COVID-19 in chest X-ray images usingDeTraC deep convolutional neural network. Applied Intelligence, 2020. (https://link.springer.com/article/10.1007/s10489-020-01829-7)
