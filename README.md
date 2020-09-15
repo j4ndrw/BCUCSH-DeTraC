@@ -103,8 +103,6 @@ Freezing 12 layers and activating 25.
  [0.         0.         0.11265005]
  [0.         0.         0.70544783]]
 ACCURACY = 0.8036318867343799
-SENSITIVITY = 0.3333333333333333
-SPECIFICITY = 0.6666666666666666
 ```
 
 #### <b>Feature extraction process</b>
@@ -152,8 +150,6 @@ Loading images from directory PNEUMONIA_2: 100%|██████████�
  [0.         0.         0.10249307]
  [0.         0.         0.70637119]]
 ACCURACY = 0.8042474607571561
-SENSITIVITY = 0.3333333333333333
-SPECIFICITY = 0.6666666666666666
 ```
 
 ### <b>Inference</b>
