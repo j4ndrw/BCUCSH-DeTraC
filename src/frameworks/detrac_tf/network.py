@@ -124,14 +124,14 @@ class Net(object):
         else:
             self.hm_layers_to_freeze = self.num_pretrained_layers
 
-        self.input_layer = self.pretrained_model.layers[0]
+#         self.input_layer = self.pretrained_model.layers[0]
             
         # Pretrained layers
         self.pretrained_layers = self.pretrained_model.layers[1:-2]
         
         # Set of pretrained layers
-        self.pretrained_layers_to_freeze = Sequential(self.pretrained_layers[:self.hm_layers_to_freeze])
-        self.pretrained_layers_to_activate = Sequential(self.pretrained_layers[self.hm_layers_to_freeze:])
+        self.pretrained_layers_to_freeze = self.pretrained_layers[:self.hm_layers_to_freeze]
+        self.pretrained_layers_to_activate = self.pretrained_layers[self.hm_layers_to_freeze:]
         
         # Custom classification layer
         self.classification_layer = Dense(
@@ -140,7 +140,7 @@ class Net(object):
             kernel_initializer=self.custom_weights,
             bias_initializer=self.custom_biases
         )
-
+        
         # Set the save path, freeze or unfreeze the gradients based on the mode and define appropriate optimizers and schedulers.
         # Feature extractor => Freeze all gradients except the custom classification layer
         # Feature composer => Unfreeze / Activate all gradients
@@ -148,20 +148,34 @@ class Net(object):
             self.save_name = f"DeTraC_feature_extractor_{now}"
             if self.training_mode == 1:
                 print("Freezing all pretrained layers. Activating only classification layer")
-                self.pretrained_layers_to_freeze.trainable = False
-                self.pretrained_layers_to_activate.trainable = False
+                for layer in self.pretrained_layers_to_freeze:
+                    layer.trainable = False
+                
+                for layer in self.pretrained_layers_to_activate:
+                    layer.trainable = False
+                    
                 self.classification_layer.trainable = True
+                
             elif self.training_mode == 2:
                 print("Activating all layers")
-                self.pretrained_layers_to_freeze.trainable = True
-                self.pretrained_layers_to_activate.trainable = True
+                for layer in self.pretrained_layers_to_freeze:
+                    layer.trainable = True
+                
+                for layer in self.pretrained_layers_to_activate:
+                    layer.trainable = True
+                    
                 self.classification_layer.trainable = True
+                
             else:
                 print(f"Freezing {self.hm_layers_to_freeze} layers and activating {self.hm_layers_to_activate}.")
-                self.pretrained_layers_to_freeze.trainable = False
-                self.pretrained_layers_to_activate.trainable = True
+                for layer in self.pretrained_layers_to_freeze:
+                    layer.trainable = False
+                
+                for layer in self.pretrained_layers_to_activate:
+                    layer.trainable = True
+                    
                 self.classification_layer.trainable = True
-
+                
             self.optimizer = SGD(
                 learning_rate=self.lr,
                 momentum=0.9,
@@ -174,10 +188,14 @@ class Net(object):
                 patience=3
             )
         else:
-            self.pretrained_layers_to_freeze.trainable = True
-            self.pretrained_layers_to_activate.trainable = True
-            self.classification_layer.trainable = True
+            for layer in self.pretrained_layers_to_freeze:
+                    layer.trainable = True
+                
+            for layer in self.pretrained_layers_to_activate:
+                layer.trainable = True
 
+            self.classification_layer.trainable = True
+            
             assert len(labels) == num_classes
             self.save_name = f"DeTraC_feature_composer_{now}"
             self.optimizer = SGD(
@@ -192,8 +210,15 @@ class Net(object):
                 patience=5
             )
             
+        self.layers = []
+        for layer in self.pretrained_layers_to_freeze:
+            self.layers.append(layer)
+        for layer in self.pretrained_layers_to_activate:
+            self.layers.append(layer)
+        self.layers.append(self.classification_layer)
+        
         # Instantiate model
-        self.model = Sequential([self.input_layer, self.pretrained_layers_to_freeze, self.pretrained_layers_to_activate, self.classification_layer])
+        self.model = Sequential(self.layers)
         self.model_path = os.path.join(self.model_dir, self.save_name)
         self.model_details_path = os.path.join(self.model_details_dir, f"{self.save_name}.detrac")
 
@@ -390,12 +415,11 @@ class Net(object):
         returns:
             <array> NxN array representing the features of an image
         """
-        
         # Instantiate a sequential model
         extractor = Sequential()
-
+        
         # Add all the pretrained layers to it
-        for layer in self.model.layers[:-1]:
+        for layer in self.model.layers[0:-1]:
             extractor.add(layer)
 
         # Use the extractor to predict upon the input image

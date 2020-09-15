@@ -136,8 +136,7 @@ def infer(
 
     # Load model
     tf.keras.models.load_model(
-        filepath=os.path.join(model_dir, model_name), 
-        compile=False
+        filepath=os.path.join(model_dir, model_name)
     )
 
     # Check if inputed file is an image

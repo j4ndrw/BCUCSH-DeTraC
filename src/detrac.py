@@ -151,9 +151,11 @@ def inference(args):
         # Create a cache containing all trained models
         model_list = []
         print("Here is a list of your models: ")
-        for i, model in enumerate(os.listdir(TF_MODEL_DIR)):
+        idx = 1
+        for model in os.listdir(TF_MODEL_DIR):
             if "feature_composer" in model:
-                print(f"{(i + 1) // 2 + 1}) {model}")
+                print(f"{idx}) {model}")
+                idx += 1
                 model_list.append(model)
 
         # Prompt user to choose a model
@@ -176,9 +178,11 @@ def inference(args):
         # Create a cache containing all trained models
         model_list = []
         print("Here is a list of your models: ")
-        for i, model in enumerate(os.listdir(TORCH_CKPT_DIR)):
+        idx = 1
+        for model in os.listdir(TORCH_CKPT_DIR):
             if "feature_composer" in model:
-                print(f"{(i + 1) // 2 + 1}) {model}")
+                print(f"{idx}) {model}")
+                idx += 1
                 model_list.append(model)
 
         assert len(model_list) != 0

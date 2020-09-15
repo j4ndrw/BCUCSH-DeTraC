@@ -20,6 +20,7 @@ def train_feature_composer(
     batch_size: int,
     num_classes: int,
     folds: int,
+    lr: float,
     model_dir: str
 ):
     """
@@ -31,6 +32,7 @@ def train_feature_composer(
      <int> batch_size
      <int> num_classes
      <int> folds: Number of folds for KFold cross validation 
+     <float> lr: Learning rate
      <string> model_dir: Model's location
     """
 
@@ -62,6 +64,7 @@ def train_feature_composer(
             include_top=True
         ),
         num_classes=num_classes,
+        lr=lr,
         mode="feature_composer",
         labels=class_names,
         model_dir=model_dir
@@ -94,7 +97,25 @@ def infer(
     model_name: str,
     input_image: str
 ) -> dict:
-    
+    """
+    Main inference method:
+
+    params:
+        <string> model_details_dir: Saved model's details directory 
+                                    (contains label names and number of classes - to be loaded for inference)
+        <string> model_dir: Saved model's directory
+        <string> model_name: Saved model's name
+        <string> input_image: Image path
+
+    returns:
+        <dict> Dictionary containing the predictions with their levels of confidence.
+                E.g.: {
+                    COVID19_1:0.10
+                    COVID19_2:0.15
+                    ...
+                }
+    """
+
     with open(f"{os.path.join(model_details_dir, f'{model_name}.detrac')}", "r") as f:
         details = f.read()
     
@@ -115,8 +136,7 @@ def infer(
 
     # Load model
     tf.keras.models.load_model(
-        filepath=os.path.join(model_dir, model_name), 
-        compile=False
+        filepath=os.path.join(model_dir, model_name)
     )
 
     # Check if inputed file is an image

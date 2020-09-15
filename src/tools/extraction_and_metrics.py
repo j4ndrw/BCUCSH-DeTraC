@@ -67,7 +67,7 @@ def extract_features(
     # Convert features list to vertical stack array
     features = np.vstack(features)
 
-    # Return (4096x4096) prediction a.k.a extract features.
+    # Return (Nx4096) prediction a.k.a extract features.
     return net.infer_using_pretrained_layers_without_last(features)
 
 # Matlab equivalent of blockproc

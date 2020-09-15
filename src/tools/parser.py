@@ -5,7 +5,7 @@ import sys
 parser = argparse.ArgumentParser(
     description="""Decompose. Transfer. Compose. 
     Before using this model, please put your image data in its appropriate folder inside the ./data/initial_data folder.
-    Make sure each file is in it's correspondent folder (e.g. COVID will have images of COVID-19 chest X-Ray images, etc...)
+    Make sure each file is in its correspondent folder (e.g. COVID will have images of COVID-19 chest X-Ray images, etc...)
     Running the script for the first time will create some empty directories for you to put your data in it.""")
 
 # Framework option
