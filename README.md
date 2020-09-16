@@ -20,7 +20,7 @@ python detrac.py -f torch
 This script consists of two elements:
 - Training:
     ```bash
-    python detrac.py -f <FRAMEWORK> --train --epochs <NUMBER_OF_EPOCHS> --num_classes <NUMBER_OF_CLASSES> --batch_size <BATCH_SIZE> --folds <NUMBER_OF_FOLDS> --k <NUMBER_OF_CLUSTER(K-Means)> --lr <FEATURE_EXTRACTOR_LR> B <FEATURE_COMPOSER_LR>
+    python detrac.py -f <FRAMEWORK> --train --epochs <NUMBER_OF_EPOCHS> --num_classes <NUMBER_OF_CLASSES> --batch_size <BATCH_SIZE> --folds <NUMBER_OF_FOLDS> --k <NUMBER_OF_CLUSTER(K-Means)> --lr <FEATURE_EXTRACTOR_LR> <FEATURE_COMPOSER_LR>
     ```
 
 - Inference
@@ -53,7 +53,7 @@ For example:
 
 ### <b>Training</b>
 
-The DeTraC model consists of training one model (we'll call it the ```feature extractor```), using said model to extract features, with which we'll compose a new dataset of images using <i>k-means clustering</i> to divide the features into 2 parts, and training a new model (we'll call it the ```feature composer```) on the newly composed dataset.
+The DeTraC model consists of training one model (we'll call it the ```feature extractor```), using said model to extract features, with which we'll compose a new dataset of images using <i>k-means clustering</i> to divide the features into k parts, and training a new model (we'll call it the ```feature composer```) on the newly composed dataset.
 
 Both the feature extractor and the feature composer are based on a pretrained model (this particular script uses the VGG16 model).
 
