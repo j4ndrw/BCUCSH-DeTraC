@@ -1,42 +1,48 @@
 # [DeTraC](https://arxiv.org/pdf/2003.13815.pdf)
 
-## Usage
+## Install guide
+This is simple installation guide:
 
-Before running the script, run ```pip install -r requirements.txt``` so that you can install all the necessary dependencies. Also, make sure that you are located in the ```src``` directory inside the ```DeTraC``` folder.
+1. Go to main folder and install requirements with ```pip3 install -r requirements.txt```. This will install all the requirements on your PC that are located in *requirements.txt* folder.
 
-A key aspect to keep in mind is that this script can be used with either a TensorFlow backend, or a PyTorch backend. Regardless of the chosen framework, the results should be the same. 
-
-To select a framework use the ```-f``` flag, followed by the framework of choice:
+2. Locate to *src* folder and run TensorFlow or PyTorch backend. <br/>
+* TensorFlow:
 ```bash
-python detrac.py -f tf
+python3 detrac.py -f tf
 ```
-
-OR
-
+* PyTorch:
 ```bash
-python detrac.py -f torch
+python3 detrac.py -f torch
 ```
+Once you run any of those commands, local folders will be created. I recommend using PyTorch backend, it seems a bit more accurate and faster. 
 
-This script consists of two elements:
-- Training:
+3. For adding data, follow the structure from bellow. 
+```
+DeTraC_COVId19
+│
+└─── data
+│   └─── initial_dataset
+│       └─── COVID19
+│       │   └─── COVID19 images
+│       └─── NORMAL
+│       │   └─── NORMAL images
+│       └─── PNEUMONIA
+│       │   └─── PNEUMONIA images
+```
+You can use this dataset for testing: [Kaggle](https://www.kaggle.com/prashant268/chest-xray-covid19-pneumonia)
+
+4. Run a training script:
     ```bash
     python detrac.py -f <FRAMEWORK> --train --epochs <NUMBER_OF_EPOCHS> --num_classes <NUMBER_OF_CLASSES> --batch_size <BATCH_SIZE> --folds <NUMBER_OF_FOLDS> --k <NUMBER_OF_CLUSTER(K-Means)> --lr <FEATURE_EXTRACTOR_LR> <FEATURE_COMPOSER_LR>
     ```
-
-- Inference
-    ```bash
-    python detrac.py -f <FRAMEWORK> --infer
-    ```
-
-You can also run the script with both the ```--infer``` and ```--train``` flag simultaneously:
+- Example of training:
 ```bash
-python detrac.py -f <FRAMEWORK> --infer --train [...]
+    python3 detrac.py -f torch --train --epochs 1 --num_classes 3 --batch_size 16 --folds 2 --k 2 --lr 0.001 0.001
 ```
 
-For details regarding the flags, you can use the ```-h / --help``` flag:
-```bash
-python detrac.py -h
-```
+Now everything should be setup! Have a look down for more information.
+
+---
 
 ## Routine
 
